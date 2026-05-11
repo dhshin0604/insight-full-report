@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 380" font-family="'Noto Sans KR', 'Pretendard', 'Malgun Gothic', sans-serif">
+  <!-- Background -->
+  <rect width="1000" height="380" fill="#FFFFFF"/>
+
+  <!-- Title -->
+  <text x="500" y="40" font-size="22" font-weight="800" text-anchor="middle" fill="#1a1a1a">WRODING Plan-Do-See 프레임워크</text>
+  <text x="500" y="65" font-size="14" text-anchor="middle" fill="#888888">사람(Plan·See) + AI(Do)의 명확한 역할 분담</text>
+
+  <!-- PLAN box -->
+  <g transform="translate(50, 100)">
+    <rect width="250" height="190" rx="10" fill="#E0FFFF" stroke="#00B8D4" stroke-width="2.5"/>
+    <text x="125" y="38" font-size="20" font-weight="800" text-anchor="middle" fill="#006D75">PLAN · 계획</text>
+    <rect x="80" y="50" width="90" height="22" rx="11" fill="#00B8D4"/>
+    <text x="125" y="66" font-size="12" font-weight="bold" text-anchor="middle" fill="white">사람 주도</text>
+    <line x1="20" y1="90" x2="230" y2="90" stroke="#00B8D4" stroke-width="1" stroke-dasharray="2,2"/>
+    <text x="125" y="120" font-size="15" text-anchor="middle" fill="#1a1a1a">📥 자료 수집</text>
+    <text x="125" y="148" font-size="15" text-anchor="middle" fill="#1a1a1a">🔍 자료 검수</text>
+    <text x="125" y="176" font-size="15" text-anchor="middle" fill="#1a1a1a">⚙️ 프롬프팅 설계</text>
+  </g>
+
+  <!-- Arrow 1 -->
+  <g transform="translate(300, 195)">
+    <line x1="0" y1="0" x2="80" y2="0" stroke="#444444" stroke-width="3"/>
+    <polygon points="80,0 68,-9 68,9" fill="#444444"/>
+  </g>
+
+  <!-- DO box -->
+  <g transform="translate(380, 100)">
+    <rect width="250" height="190" rx="10" fill="#FFE8E8" stroke="#ED1C24" stroke-width="2.5"/>
+    <text x="125" y="38" font-size="20" font-weight="800" text-anchor="middle" fill="#ED1C24">DO · 실행</text>
+    <rect x="80" y="50" width="90" height="22" rx="11" fill="#ED1C24"/>
+    <text x="125" y="66" font-size="12" font-weight="bold" text-anchor="middle" fill="white">AI 자동화</text>
+    <line x1="20" y1="90" x2="230" y2="90" stroke="#ED1C24" stroke-width="1" stroke-dasharray="2,2"/>
+    <text x="125" y="120" font-size="15" text-anchor="middle" fill="#1a1a1a">📄 한국어 Word</text>
+    <text x="125" y="148" font-size="15" text-anchor="middle" fill="#1a1a1a">📄 영어 Word</text>
+    <text x="125" y="176" font-size="15" text-anchor="middle" fill="#1a1a1a">🎬 KR · EN PPT</text>
+  </g>
+
+  <!-- Arrow 2 -->
+  <g transform="translate(630, 195)">
+    <line x1="0" y1="0" x2="80" y2="0" stroke="#444444" stroke-width="3"/>
+    <polygon points="80,0 68,-9 68,9" fill="#444444"/>
+  </g>
+
+  <!-- SEE box -->
+  <g transform="translate(710, 100)">
+    <rect width="250" height="190" rx="10" fill="#E0FFFF" stroke="#00B8D4" stroke-width="2.5"/>
+    <text x="125" y="38" font-size="20" font-weight="800" text-anchor="middle" fill="#006D75">SEE · 검증</text>
+    <rect x="80" y="50" width="90" height="22" rx="11" fill="#00B8D4"/>
+    <text x="125" y="66" font-size="12" font-weight="bold" text-anchor="middle" fill="white">사람 주도</text>
+    <line x1="20" y1="90" x2="230" y2="90" stroke="#00B8D4" stroke-width="1" stroke-dasharray="2,2"/>
+    <text x="125" y="120" font-size="15" text-anchor="middle" fill="#1a1a1a">✅ 팩트 체크</text>
+    <text x="125" y="148" font-size="15" text-anchor="middle" fill="#1a1a1a">✍️ 문체 교정</text>
+    <text x="125" y="176" font-size="15" text-anchor="middle" fill="#1a1a1a">🎨 최종 편집</text>
+  </g>
+
+  <!-- Bottom caption -->
+  <text x="500" y="330" font-size="13" text-anchor="middle" fill="#555555">
+    자료 검수까지 직접 → <tspan font-weight="bold" fill="#006D75">100% 본인 롸딩</tspan>
+    <tspan dx="20">·</tspan>
+    <tspan dx="20">검수 생략 → 거의 100% 내 글</tspan>
+    <tspan dx="20">·</tspan>
+    <tspan dx="20">See만 직접 → 내가 확인한 글</tspan>
+  </text>
+  <text x="500" y="358" font-size="11" text-anchor="middle" fill="#888888">© WRODING by 신동형 — Plan-Do-See에서 누가 주도하느냐에 따라 글의 소유권이 결정됨</text>
+</svg>

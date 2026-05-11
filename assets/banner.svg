@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" font-family="'Noto Sans KR', 'Pretendard', 'Malgun Gothic', sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f0f0f"/>
+      <stop offset="100%" stop-color="#2a2a2a"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="400" fill="url(#bg)"/>
+
+  <!-- Top cyan accent bar -->
+  <rect width="1200" height="6" fill="#00FFFF"/>
+
+  <!-- Brand tag (top left, matches WRODING PPT spec) -->
+  <rect x="0" y="6" width="200" height="42" fill="#555555"/>
+  <text x="100" y="34" fill="#00FFFF" font-weight="bold" font-size="15" text-anchor="middle" letter-spacing="0.5">[신동형 인사이트]</text>
+
+  <!-- Main title -->
+  <text x="80" y="170" fill="#FFFFFF" font-weight="800" font-size="68" letter-spacing="-1">insight-full-report</text>
+
+  <!-- Subtitle (Cyan) -->
+  <text x="80" y="220" fill="#00FFFF" font-size="26" font-weight="600">WRODING의 분석 보고서 작성을 한 줄로</text>
+
+  <!-- Tagline -->
+  <text x="80" y="262" fill="#AAAAAA" font-size="17">Word KR · Word EN · PowerPoint KR · PowerPoint EN — 4종 동시 생성</text>
+
+  <!-- 4 document icons (right side) -->
+  <g transform="translate(880, 110)">
+    <!-- KR Word -->
+    <rect x="0" y="0" width="68" height="88" rx="6" fill="#2B579A" stroke="#1F4E79" stroke-width="2"/>
+    <text x="34" y="50" fill="white" font-size="16" font-weight="bold" text-anchor="middle">KR</text>
+    <text x="34" y="72" fill="#CFE2F3" font-size="11" text-anchor="middle">.docx</text>
+
+    <!-- EN Word -->
+    <rect x="80" y="0" width="68" height="88" rx="6" fill="#2B579A" stroke="#1F4E79" stroke-width="2"/>
+    <text x="114" y="50" fill="white" font-size="16" font-weight="bold" text-anchor="middle">EN</text>
+    <text x="114" y="72" fill="#CFE2F3" font-size="11" text-anchor="middle">.docx</text>
+
+    <!-- KR PowerPoint -->
+    <rect x="0" y="100" width="68" height="88" rx="6" fill="#D24726" stroke="#A53E1F" stroke-width="2"/>
+    <text x="34" y="150" fill="white" font-size="16" font-weight="bold" text-anchor="middle">KR</text>
+    <text x="34" y="172" fill="#FCE5CD" font-size="11" text-anchor="middle">.pptx</text>
+
+    <!-- EN PowerPoint -->
+    <rect x="80" y="100" width="68" height="88" rx="6" fill="#D24726" stroke="#A53E1F" stroke-width="2"/>
+    <text x="114" y="150" fill="white" font-size="16" font-weight="bold" text-anchor="middle">EN</text>
+    <text x="114" y="172" fill="#FCE5CD" font-size="11" text-anchor="middle">.pptx</text>
+  </g>
+
+  <!-- Bottom signature bar -->
+  <rect x="0" y="370" width="1200" height="30" fill="#0a0a0a"/>
+  <text x="80" y="389" fill="#888888" font-size="12">Researched, Written, and Created by DONG HYUNG SHIN</text>
+  <text x="1120" y="389" fill="#ED1C24" font-size="12" font-weight="bold" text-anchor="end">v0.5 · Determinism Edition</text>
+</svg>

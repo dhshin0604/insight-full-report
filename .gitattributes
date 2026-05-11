@@ -1,2 +1,7 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+# Force markdown files to be treated as text
+*.md text eol=lf diff
+*.svg text eol=lf diff
+*.py text eol=lf diff
+*.sh text eol=lf diff
+*.js text eol=lf diff
+*.json text eol=lf diff

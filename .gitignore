@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+
+# Build outputs
+outputs/
+build/
+dist/
+*.egg-info/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temp files
+*.tmp
+*.log
+*.bak
+
+# Secrets
+.env
+.env.local
+*.key
+
+# Generated documents (재현 가능하므로 git에 포함하지 않음)
+*_KR_Report_*.docx
+*_EN_Report_*.docx
+*_KR_Presentation_*.pptx
+*_EN_Presentation_*.pptx

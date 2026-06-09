@@ -425,3 +425,29 @@ WORKSPACE=$(find /sessions -maxdepth 4 -type d -name "ClaudeCoworkFile" 2>/dev/n
 echo "WORKSPACE=$WORKSPACE"
 # 예: /sessions/funny-jolly-euler/mnt/ClaudeCoworkFile
 ```
+
+---
+
+## 챕터 자동 번호 헬퍼 — H1C / H2C (v0.9.1 필수)
+
+본문 챕터 헤딩은 **반드시 H1C/H2C 헬퍼**로 작성한다. 번호가 코드 카운터에서 자동
+증가하므로, 내용 치환 시 `1. / 1.1` 번호가 누락되는 드리프트가 구조적으로 불가능하다.
+
+```js
+let _ch = 0, _sec = 0;
+const H1C = (t) => { _ch += 1; _sec = 0; return H1(`${_ch}. ${t}`); };   // "1. 제목"
+const H2C = (t) => { _sec += 1; return H2(`${_ch}.${_sec} ${t}`); };      // "1.1 소제목"
+```
+
+사용 규칙:
+
+| 섹션 | 헬퍼 | 결과 |
+|---|---|---|
+| 본문 챕터 (Devil's Advocate 포함) | `H1C('제목')` | `1. 제목`, `2. 제목` … |
+| 챕터 내 소제목 | `H2C('소제목')` | `1.1`, `1.2`, `2.1` … |
+| Executive Summary / 핵심 질문과 답변 / 맺음말 / 참고 자료 / 핵심 키워드 | `H1()`/`H2()` (번호 없음) | 그대로 |
+
+- 챕터 순서를 바꾸거나 추가/삭제해도 번호는 자동 재배열된다 — 텍스트에 번호를 직접 쓰지 말 것.
+- `verify_content.py` 의 **HEADNUM 게이트(ERROR)** 가 검사한다: 번호 없는 챕터 H1,
+  챕터-소제목 번호 불일치(예: 2장 아래 `1.3`), 번호 순서 오류(1..N 연속 위반).
+- PPTX TOC(로마숫자 I~VII)와 Word 번호(1~7)는 표기만 다르고 챕터 구성은 동일해야 한다.

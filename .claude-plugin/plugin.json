@@ -1,10 +1,10 @@
 {
   "name": "insight-full-report",
-  "version": "0.5.0",
-  "description": "신동형 인사이트 4종 문서 생성기 (Word KR+EN, PowerPoint KR+EN). v0.5 Determinism Edition: build_pptx.sh 오케스트레이터로 OOXML 조작 외부화, verify_toc.py로 TOC↔본문 정합 강제, koreanize-matplotlib 폰트 자동조달. Opus/Sonnet 4.6 양쪽에서 동일 결과 보장.",
+  "version": "0.9.1",
+  "description": "신동형 인사이트 4종 문서 생성기 (Word KR+EN, PowerPoint KR+EN). v0.9.1 Unified Deep-Verify Edition: 동적 워크플로(ultracode) 하니스 내장, Deep Verification(Claims Ledger 기반 할루시네이션 차단), So-What 인사이트 프레임워크, 시각화 카탈로그, Word 챕터 자동 번호(H1C/H2C + HEADNUM 게이트), 4중 품질 게이트(toc/content/claims/judge).",
   "author": {
     "name": "DH Shin (신동형)",
     "email": "donghyung.shin@gmail.com"
   },
-  "keywords": ["report", "presentation", "word", "pptx", "korean", "analyst", "insight", "신동형", "deterministic", "drift-proof"]
+  "keywords": ["report", "presentation", "word", "pptx", "korean", "analyst", "insight", "신동형", "deterministic", "drift-proof", "dynamic-workflow", "harness", "deep-verification", "fact-check"]
 }

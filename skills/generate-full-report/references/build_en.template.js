@@ -29,6 +29,14 @@ const H2 = (t) => new Paragraph({
   spacing: { before: 280, after: 120 },
 });
 
+// ─── 챕터 자동 번호 헬퍼 (v0.9.1) ─────────────────────────────────────────────
+// 본문 챕터는 반드시 H1C/H2C 를 사용한다. H1C → "1. 제목", H2C → "1.1 소제목".
+// 번호가 코드에서 자동 증가하므로 내용 치환 시 번호 누락 드리프트가 불가능하다.
+// Executive Summary·핵심 질문과 답변·맺음말·참고 자료 등 특수 섹션만 번호 없는 H1/H2 사용.
+let _ch = 0, _sec = 0;
+const H1C = (t) => { _ch += 1; _sec = 0; return H1(`${_ch}. ${t}`); };
+const H2C = (t) => { _sec += 1; return H2(`${_ch}.${_sec} ${t}`); };
+
 function textBox(title, children) {
   const titleRow = title ? [new Paragraph({
     children: [new TextRun({ text: title, bold: true, size: 24, font: F, color: '1A3A6B' })],
@@ -223,8 +231,8 @@ const doc = new Document({
       // ═══════════════════════════════════════════════════════
       // PAGE 3: Chapter I
       // ═══════════════════════════════════════════════════════
-      H1('Chapter I. Global Overview — The Embodied AI Macro Landscape'),
-      H2('1.1 Defining the Concept: The Rise of "AI with a Body"'),
+      H1C('Global Overview — The Embodied AI Macro Landscape'),
+      H2C('Defining the Concept: The Rise of "AI with a Body"'),
       textBox('KEY MESSAGE', [
         P(N('Embodied AI is not a simple merger of AI and robotics. It is a new technology paradigm that implements a complete closed-loop of perception, decision-making, and action through a physical body. Just as humans need both brain and body to interact with the world, AI must unite with a physical entity to create value in reality.')),
       ]),
@@ -233,7 +241,7 @@ const doc = new Document({
       P(N('The ITU formalized this concept in ITU-T F.748.66, defining Embodied AI as "AI that autonomously interacts with the physical world and adapts to its environment by integrating with a physical entity." This definition encodes three core capabilities. Cognitive capability — the ability to perceive and understand the surrounding environment through cameras, LiDAR, and other sensors. Collaborative capability — the ability to transition from solo operation to joint work with other robots or humans. Learning capability — the ability to adapt and learn from new situations in the field, building on pre-trained knowledge.')),
       P(N('The physical architecture of Embodied AI spans three layers. ① The physical body — humanoid robots, quadrupeds, autonomous vehicles, drones: the physical vessel that carries the AI. ② The intelligence core — LLM, VLM, VLA (Vision-Language-Action), and World Models: the software brain responsible for reasoning and planning. ③ Environment interaction — the closed-loop feedback system that takes in data through sensors and outputs actions through actuators. The three platforms commonly called the "smart trinity" of future production and daily life — humanoid robots, autonomous vehicles, and drones — all share this three-layer architecture.')),
       BK(),
-      H2('1.2 Surging Global Interest: Capital and Technology Converge'),
+      H2C('Surging Global Interest: Capital and Technology Converge'),
       textBox('KEY MESSAGE', [
         P(N('When NVIDIA, McKinsey, and other global leaders declared Embodied AI "the next frontier," this was not mere technological optimism. The projected market of $339.8 billion across humanoid robots, autonomous vehicles, and drones by 2030, combined with already-deployed enterprise capital, signals a structural shift in the technology investment landscape.')),
       ]),
@@ -241,7 +249,7 @@ const doc = new Document({
       P(N('After NVIDIA CEO Jensen Huang declared at his CES 2025 keynote that "the next frontier of AI is physical AI," the global technology industry\'s gaze shifted decisively toward this domain. This is not marketing language. NVIDIA itself is deploying massive capital into robotics learning infrastructure through its Omniverse platform and Isaac Sim. McKinsey projects that Physical AI could enhance productivity in manufacturing, logistics, and services by tens of percent by 2030, and specific market forecasts bear this out: Grand View Research estimates humanoid robots at $4.04 billion, autonomous vehicles (L1-L3) at $172.2 billion, and drones at $163.6 billion by 2030, for a combined $339.8 billion.')),
       P(N('Venture activity reflects these expectations. Figure AI\'s $1 billion raise from Microsoft, OpenAI, and Bezos Expeditions in September 2025 at a $39 billion valuation stands as a landmark. Apptronik\'s $350 million Series A close in February 2025 further validates investor conviction. Three distinct strategic camps have crystallized: Full-Stack Integrators (Figure AI, ZHIYUAN Robotics) who seek vertical integration from software to hardware for maximum performance; Hardware-Focused Players (Unitree, Agility, Apptronik) who concentrate on high-performance body manufacturing and resolve software through partnerships; and Software-Brain Specialists (Physical Intelligence, Field AI, Galaxy General) who develop hardware-agnostic algorithms and supply software to multiple hardware manufacturers.')),
       BK(),
-      H2('1.3 Still in Early Stage: Bridging Expectation and Reality'),
+      H2C('Still in Early Stage: Bridging Expectation and Reality'),
       textBox('KEY MESSAGE', [
         P(N('Despite white-hot technology enthusiasm and investment, the "challenge cycle" of data-model-hardware-deployment remains unresolved. The fact that current state-of-the-art VLA models achieve only 20-40% success on long-horizon tasks is a sobering reminder of the distance between current capabilities and scaled commercial deployment.')),
       ]),
@@ -254,8 +262,8 @@ const doc = new Document({
       // ═══════════════════════════════════════════════════════
       // PAGE 4: Chapter II
       // ═══════════════════════════════════════════════════════
-      H1('Chapter II. Technology Innovation — Data-Driven SW-HW Integration'),
-      H2('2.1 Algorithm Technology: Four Pathways in Parallel'),
+      H1C('Technology Innovation — Data-Driven SW-HW Integration'),
+      H2C('Algorithm Technology: Four Pathways in Parallel'),
       textBox('KEY MESSAGE', [
         P(N('The technology evolution from LLM to VLM to VLA to World Model is rapidly elevating the cognitive and decision-making capabilities of Embodied AI. The four-fold surge in VLA-related papers to 1,700+ in 2025 demonstrates that both academia and industry are investing intensively in this direction.')),
       ]),
@@ -280,7 +288,7 @@ const doc = new Document({
         ]
       ),
       BK(),
-      H2('2.2 Data: The "Crude Oil" of Embodied AI'),
+      H2C('Data: The "Crude Oil" of Embodied AI'),
       textBox('KEY MESSAGE', [
         P(N('Training Embodied AI requires tens of thousands to millions of hours of high-quality motion data. How efficiently companies acquire and leverage this data has become the defining variable for competitive advantage, and a dual strategy combining simulation-synthesized and real-robot-collected data has become the industry standard.')),
       ]),
@@ -289,7 +297,7 @@ const doc = new Document({
       P(N('Simulation-synthesized data uses physics simulators and world models to generate motion trajectories, collision responses, and object manipulation data at scale in virtual environments. Its strengths are low cost, zero safety risk, and 24/7 parallel generation capacity. However, the physics of virtual environments never perfectly mirror reality, creating the "Sim-to-Real Gap" — the performance degradation that occurs when policies learned in simulation are transferred to real robots. This gap is particularly severe for contact dynamics such as friction, elasticity, and multi-point contact, which are notoriously difficult to simulate accurately.')),
       P(N('Real-robot collection gathers actual robot motion data through teleoperation, VR gloves, exoskeleton rigs, optical motion capture, and inertial measurement systems. This produces realistic, high-fidelity data, but at high cost and with limited scalability. The current best practice combines the two approaches: generating foundational training data in simulation at scale, then collecting high-quality fine-tuning data from real robots. The question of "what to collect and how to use it" remains an active area without industry consensus.')),
       BK(),
-      H2('2.3 Hardware Diversification: Competing Visions of the Optimal Form'),
+      H2C('Hardware Diversification: Competing Visions of the Optimal Form'),
       textBox('KEY MESSAGE', [
         P(N('Diverse hardware forms — humanoids, quadrupeds, collaborative arms — are accelerating SW-HW integrated component innovation around sensing, actuation, energy, and execution systems. Unitree Robotics\' launch of the R1 humanoid at 39,900 yuan is a symbolic event demonstrating that the price barrier for humanoid robots is falling rapidly.')),
       ]),
@@ -302,8 +310,8 @@ const doc = new Document({
       // ═══════════════════════════════════════════════════════
       // PAGE 5: Chapter III
       // ═══════════════════════════════════════════════════════
-      H1('Chapter III. Product Ecosystem — Scene-Driven Diversification'),
-      H2('3.1 Robots: The Hottest Embodied AI Platform'),
+      H1C('Product Ecosystem — Scene-Driven Diversification'),
+      H2C('Robots: The Hottest Embodied AI Platform'),
       textBox('KEY MESSAGE', [
         P(N('Humanoid robots have emerged as the primary platform for Embodied AI as competition between US and Chinese companies intensifies. Three competing business models — full-stack integration, hardware focus, and software-brain specialization — are each validating their thesis in different market segments.')),
       ]),
@@ -326,7 +334,7 @@ const doc = new Document({
         ]
       ),
       BK(),
-      H2('3.2 Smart Mobility: The Fastest-Commercializing Segment'),
+      H2C('Smart Mobility: The Fastest-Commercializing Segment'),
       textBox('KEY MESSAGE', [
         P(N('Autonomous vehicles and drones are the fastest-commercializing Embodied AI platforms. The combined market of $172.2 billion for AVs and $163.6 billion for drones by 2030 is already being validated by commercial services expanding in structured environments today.')),
       ]),
@@ -338,8 +346,8 @@ const doc = new Document({
       // ═══════════════════════════════════════════════════════
       // PAGE 6: Chapter IV
       // ═══════════════════════════════════════════════════════
-      H1('Chapter IV. Industrial Ecosystem — Investment Boom and Structural Challenges'),
-      H2('4.1 Supply Chain Expansion and Early Ecosystem Formation'),
+      H1C('Industrial Ecosystem — Investment Boom and Structural Challenges'),
+      H2C('Supply Chain Expansion and Early Ecosystem Formation'),
       textBox('KEY MESSAGE', [
         P(N('The Embodied AI industrial ecosystem is forming rapidly. China\'s market alone recorded 744 investment transactions totaling 73.543 billion yuan through end-2025, with 352+ companies forming a four-block ecosystem of sector applications, product & services, technical services, and infrastructure. Sustaining this growth, however, requires simultaneously resolving three fundamental challenges: safety, standardization, and proven utility.')),
       ]),
@@ -352,8 +360,8 @@ const doc = new Document({
       // ═══════════════════════════════════════════════════════
       // PAGE 7: Chapter V
       // ═══════════════════════════════════════════════════════
-      H1('Chapter V. Outlook — Three Development Directions and Long-Term Scenarios'),
-      H2('5.1 Architecture Transformation: From Modules to Fusion'),
+      H1C('Outlook — Three Development Directions and Long-Term Scenarios'),
+      H2C('Architecture Transformation: From Modules to Fusion'),
       textBox('KEY MESSAGE', [
         P(N('The transition from "stacked functional modules" to "multimodal cognitive fusion" will drive the next technical leap in Embodied AI. As World Models evolve from supporting tools into the AI brain itself, behavior simulation and action prediction will become natively integrated capabilities.')),
       ]),
@@ -361,7 +369,7 @@ const doc = new Document({
       P(N('Most Embodied AI systems today are built by developing perception, planning, and control modules separately and then connecting them. This is analogous to how the first smartphones combined cellular capability, a camera, and a music player as separate components. But just as the iPhone unified all these functions under a single operating system, Embodied AI is moving rapidly toward architectures where multimodal perception and action planning are processed within a single network.')),
       P(N('World Models are central to this architectural transition. A World Model enables AI to internalize the physics of its environment — to simulate "what will happen if I do this" before actually acting. This is analogous to a human estimating the weight of an object and calibrating grip force before lifting it. The surge in World Model research — NVIDIA\'s Cosmos Predict, Ctrl-World, V-JEPA 2 — signals broad conviction in this technical direction.')),
       BK(),
-      H2('5.2 Application Deepening: From "Demonstration" to "Utility"'),
+      H2C('Application Deepening: From "Demonstration" to "Utility"'),
       textBox('KEY MESSAGE', [
         P(N('Embodied AI application scenarios will expand in stages — from controlled environments (manufacturing, logistics) through semi-structured environments (home, healthcare) to unstructured environments (extreme, outdoor). The completion of the "custom development to standardized delivery to lifecycle support" commercialization loop is the key performance indicator for this transition.')),
       ]),
@@ -369,7 +377,7 @@ const doc = new Document({
       P(N('Current Embodied AI commercialization is largely in the "demonstration" phase. Impressive results are shown at exhibitions and in pilot projects, but cases where robots have replaced human workers in actual production environments to generate economic value remain limited. The reason Agility Robotics\' Digit deployment in Amazon warehouses attracts such attention is precisely its rarity. The speed of the "demonstration to utility" transition is existential for Embodied AI companies.')),
       P(N('Application scenario expansion will likely follow a difficulty gradient. Near-term: repetitive, predictable tasks in manufacturing and logistics will be automated first. Medium-term: home services (domestic assistance, elderly care) and healthcare assistance (medication delivery, patient transfer support) will be unlocked — here, the ability to handle unpredictable human interactions becomes the critical requirement. Long-term: Embodied AI will extend to extreme environments inaccessible to humans — disaster zones, deep ocean, space.')),
       BK(),
-      H2('5.3 Safety and Ethics: Prerequisites for Sustainable Growth'),
+      H2C('Safety and Ethics: Prerequisites for Sustainable Growth'),
       textBox('KEY MESSAGE', [
         P(N('The transition from "regulatory compliance" to a "comprehensive ethical cooperation framework" is necessary. Without resolving the four imperatives of functional safety, cybersecurity, liability attribution, and privacy protection, Embodied AI\'s technological progress may be blocked by the wall of social acceptability.')),
       ]),
@@ -381,7 +389,7 @@ const doc = new Document({
       // ═══════════════════════════════════════════════════════
       // PAGE 8: Devil's Advocate
       // ═══════════════════════════════════════════════════════
-      H1("Devil's Advocate — Five Critical Challenges"),
+      H1C("Devil's Advocate — Five Critical Challenges"),
       textBox("① VLA Generalization Limitations: Still Only Good at the Familiar", [
         P(N('The impressive demo videos produced by VLA models come with an implicit asterisk: they were generated "within the training data distribution." Both 1X World Model and Physical Intelligence pi0.5 are reported to show sharp performance drops with unfamiliar objects, novel environments, or unexpected occlusions. A robot trained 1,000 times to grasp a cup may still fail when the cup shape is slightly different or the lighting changes. This reflects the fundamental limitation of current VLAs — they rely on "pattern recognition" rather than "understanding." The distance to a truly general-purpose Embodied AI remains considerable.')),
       ]),

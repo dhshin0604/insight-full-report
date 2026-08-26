@@ -158,9 +158,27 @@ insight-full-report/
 │       ├── gate_report.py                # unified 4-gate verdict
 │       ├── build_pptx.sh / build_pptx_checked.sh
 │       └── build_*.template.{js,py} + TEMPLATE.pptx
+├── skills/quality-core/                  # standalone quality core (v0.1)
+│   ├── SKILL.md                          # gates + 6-phase verify workflow
+│   └── references/                       # claims-ledger · so-what · 16-pt rubric
+│                                         #   · style rules · verify_claims_lite.py
 ├── LICENSE                               # MIT
 └── README.md
 ```
+
+---
+
+## Bundled skill: quality-core / 번들 스킬 — 품질 코어 (v0.1)
+
+`skills/quality-core/` is the **standalone quality core** extracted from this pipeline. It applies the same discipline — Claims-Ledger fact gate (`verified / estimate / removed`), So-What insight ladder, fact-vs-opinion sentence rules, the 16-point LLM-judge rubric, and the retry-with-limit loop (≤3, then `NEEDS_REVIEW` back to a human) — to **any document**: your own drafts, memos, or reports written by others. No 4-doc build required.
+
+`skills/quality-core/`는 본 파이프라인에서 **품질 코어만 떼어낸 범용 검증·개선 스킬**입니다. 어떤 초안·보고서에든 Claims Ledger 사실 게이트, So-What 사다리, 사실↔해석 문형 규율, 16점 judge 루브릭, 재시도≤3회 루프를 그대로 적용합니다. 트리거 예: **"품질 코어 적용해줘"**, **"이 초안 검증해줘"**, **"팩트체크 게이트 돌려줘"**.
+
+| | `generate-full-report` | `quality-core` |
+|---|---|---|
+| Purpose / 목적 | build the 4-doc set / 4종 정본 문서 생성 | verify & improve any draft / 임의 문서 검증·개선 |
+| Output / 산출 | KR·EN Word + PPTX | revised draft + `claims.json` + rubric scorecard |
+| Machine gate / 기계 게이트 | full OOXML gate chain | `verify_claims_lite.py` (MD/text) |
 
 ---
 
@@ -173,6 +191,7 @@ insight-full-report/
 - [x] Dynamic-workflow harness (v0.9)
 - [x] Deep verification / claims ledger (v0.9)
 - [x] Auto-numbered Word chapters (v0.9.1)
+- [x] Standalone `quality-core` skill — extracted quality core (v0.1)
 
 ---
 

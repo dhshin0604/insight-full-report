@@ -231,7 +231,7 @@ new Paragraph({
 // 날짜 + 작성자
 new Paragraph({
   children: [new TextRun({
-    text: '{YYYY.MM.DD}  |  작성: DH Shin (신동형)',
+    text: '{YYYY.MM.DD}  |  작성: {AUTHOR_EN} ({AUTHOR_KR})',
     size: 18, font: KR, color: '555555',
   })],
   alignment: AlignmentType.CENTER,

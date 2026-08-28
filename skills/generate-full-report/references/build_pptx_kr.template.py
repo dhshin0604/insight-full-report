@@ -20,6 +20,9 @@ NS = ('xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" '
       'xmlns:p15="http://schemas.microsoft.com/office/powerpoint/2012/main"')
 
 LANG = 'ko'
+# PROFILE: 표지 작성자·맺음말 연락처는 AUTHOR_KR / PHONE_KR / EMAIL 플레이스홀더로 두고,
+# build_pptx.sh 가 슬라이드 작성 직후 references/profile.json 값으로 자동 치환한다
+# (TEMPLATE.pptx 레이아웃 하단 크레딧 포함).
 
 def esc(t): return str(t).replace('&','&amp;').replace('<','&lt;').replace('>','&gt;')
 
@@ -208,7 +211,7 @@ save(1, sld(f'''
       <p:txBody><a:bodyPr anchor="ctr" bIns="0" lIns="91440" rIns="91440" tIns="0" wrap="square"/>
         <a:lstStyle/>
         <a:p><a:pPr algn="ctr"><a:buNone/></a:pPr>
-          {rr('신동형  |  2026.04.08', sz=1600, color='555555')}<a:endParaRPr/></a:p>
+          {rr('{AUTHOR_KR}  |  2026.04.08', sz=1600, color='555555')}<a:endParaRPr/></a:p>
       </p:txBody></p:sp>
 '''))
 
@@ -563,9 +566,9 @@ closing_xml = f'''<?xml version="1.0" encoding="utf-8"?>
         <a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:noFill/><a:ln><a:noFill/></a:ln></p:spPr>
       <p:txBody><a:bodyPr anchor="ctr" bIns="0" lIns="0" rIns="0" tIns="0" wrap="square"/>
         <a:lstStyle/>
-        <a:p><a:pPr algn="ctr"><a:buNone/></a:pPr>{rr('신동형', sz=2000, bold=True, color='1A3A6B')}<a:endParaRPr/></a:p>
-        <a:p><a:pPr algn="ctr"><a:buNone/></a:pPr>{rr('010-2202-8761', sz=1800, color='555555')}<a:endParaRPr/></a:p>
-        <a:p><a:pPr algn="ctr"><a:buNone/></a:pPr>{rr('donghyung.shin@gmail.com', sz=1800, color='555555')}<a:endParaRPr/></a:p>
+        <a:p><a:pPr algn="ctr"><a:buNone/></a:pPr>{rr('{AUTHOR_KR}', sz=2000, bold=True, color='1A3A6B')}<a:endParaRPr/></a:p>
+        <a:p><a:pPr algn="ctr"><a:buNone/></a:pPr>{rr('{PHONE_KR}', sz=1800, color='555555')}<a:endParaRPr/></a:p>
+        <a:p><a:pPr algn="ctr"><a:buNone/></a:pPr>{rr('{EMAIL}', sz=1800, color='555555')}<a:endParaRPr/></a:p>
       </p:txBody></p:sp>
   </p:spTree></p:cSld>
   <p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr>

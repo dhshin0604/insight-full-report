@@ -2,27 +2,27 @@
 $THIS = Split-Path -Parent $MyInvocation.MyCommand.Definition
 Start-Transcript -Path (Join-Path $THIS 'copy_to_insights.log') -Force | Out-Null
 
-# 신동형인사이트 폴더 위치 (OneDrive 동기화 경로 자동 탐색)
+# {WORKSPACE_DIRNAME} 폴더 위치 (OneDrive 동기화 경로 자동 탐색) — profile.json 의 WORKSPACE_DIRNAME 을 apply_profile.py 로 치환
 $candidates = @(
-    "$env:USERPROFILE\OneDrive\Dong Hyung - 개인\신동형인사이트",
-    "$env:USERPROFILE\OneDrive - Personal\신동형인사이트",
-    "$env:OneDrive\신동형인사이트",
-    "$env:OneDriveConsumer\신동형인사이트",
-    "$env:USERPROFILE\OneDrive\신동형인사이트"
+    "$env:USERPROFILE\OneDrive\{WORKSPACE_DIRNAME}",
+    "$env:USERPROFILE\OneDrive - Personal\{WORKSPACE_DIRNAME}",
+    "$env:OneDrive\{WORKSPACE_DIRNAME}",
+    "$env:OneDriveConsumer\{WORKSPACE_DIRNAME}",
+    "$env:USERPROFILE\OneDrive\{WORKSPACE_DIRNAME}"
 )
 $INSIGHTS = $null
 foreach ($c in $candidates) {
     if (Test-Path $c) { $INSIGHTS = $c; break }
 }
 if (-Not $INSIGHTS) {
-    Write-Host "❌ 신동형인사이트 폴더를 찾지 못했습니다. 후보:" -ForegroundColor Red
+    Write-Host "❌ {WORKSPACE_DIRNAME} 폴더를 찾지 못했습니다. 후보:" -ForegroundColor Red
     $candidates | ForEach-Object { Write-Host "   $_" }
     Stop-Transcript | Out-Null
     Start-Sleep -Seconds 6
     exit 1
 }
 
-Write-Host "신동형인사이트 위치: $INSIGHTS"
+Write-Host "{WORKSPACE_DIRNAME} 위치: $INSIGHTS"
 $TOPIC_DIR = Join-Path $INSIGHTS "HumanoidWP2025_20260426"
 if (-Not (Test-Path $TOPIC_DIR)) {
     New-Item -ItemType Directory -Force -Path $TOPIC_DIR | Out-Null
@@ -45,7 +45,7 @@ foreach ($f in $files) {
 Write-Host ""
 Write-Host "── 적용 후 디렉터리 내용 ──"
 Get-ChildItem -Path $TOPIC_DIR | Format-Table Name, Length, LastWriteTime -AutoSize | Out-String | Write-Host
-Write-Host "✅ 신동형인사이트\HumanoidWP2025_20260426 보관 완료." -ForegroundColor Green
+Write-Host "✅ {WORKSPACE_DIRNAME}\HumanoidWP2025_20260426 보관 완료." -ForegroundColor Green
 
 Stop-Transcript | Out-Null
 Start-Sleep -Seconds 4

@@ -18,6 +18,12 @@
 #   PPTX_SKILL — pptx 스킬 디렉터리 (자동탐색 가능)
 #   TEMPLATE   — TEMPLATE.pptx 경로 (자동탐색 가능, 본 스킬의 references/TEMPLATE.pptx 우선)
 #   N_CONTENT  — 본문 슬라이드 수 (기본 8 → 총 13장)
+#   PROFILE    — profile.json 경로 (미지정 시 자동 선택: ./profile.json > references/profile.json)
+#   LOGO       — 표지 로고 PNG 경로 (미지정 시 references/logo.png, 없으면 템플릿 기본 이미지)
+#
+# 프로필 자동 적용: 슬라이드 작성 직후 references/apply_profile.py 가 unpacked/ppt 전체
+# (슬라이드 + 레이아웃 하단 크레딧)의 {AUTHOR_KR} {AUTHOR_EN} {PHONE_KR} {PHONE_EN} {EMAIL}
+# 를 profile.json 값으로 치환한다. 값이 비어 플레이스홀더가 남으면 빌드를 중단한다.
 #
 set -euo pipefail
 
@@ -45,8 +51,13 @@ fi
 
 STRIP="$SKILL_DIR/strip_google_extensions.py"
 VERIFY="$SKILL_DIR/verify_toc.py"
+APPLY_PROFILE="$SKILL_DIR/apply_profile.py"
+LOGO="${LOGO:-$SKILL_DIR/logo.png}"
 [ -f "$STRIP" ]  || { echo "ERROR: $STRIP not found"; exit 2; }
 [ -f "$VERIFY" ] || { echo "ERROR: $VERIFY not found"; exit 2; }
+[ -f "$APPLY_PROFILE" ] || { echo "ERROR: $APPLY_PROFILE not found"; exit 2; }
+# 프로필 파일 자동 선택: PROFILE 환경변수 > ./profile.json(작업 폴더) > references/profile.json
+PROFILE="$(python3 "$APPLY_PROFILE" --which)"
 
 UNPACKED="unpacked_${LANG_CODE}"
 
@@ -54,6 +65,8 @@ echo "════════════════════════�
 echo "  build_pptx.sh — $LANG_CODE → $OUTPUT"
 echo "  PPTX_SKILL = $PPTX_SKILL"
 echo "  TEMPLATE   = $TEMPLATE"
+echo "  PROFILE    = $PROFILE"
+echo "  LOGO       = $([ -f "$LOGO" ] && echo "$LOGO" || echo "(none — 템플릿 기본 이미지 유지)")"
 echo "  BUILD_PY   = $BUILD_PY"
 echo "  UNPACKED   = $UNPACKED"
 echo "═══════════════════════════════════════════════════════════════"
@@ -61,6 +74,12 @@ echo "════════════════════════�
 # ── 1. 클린 unpack ────────────────────────────────────────────────
 rm -rf "$UNPACKED"
 python3 "$PPTX_SKILL/scripts/office/unpack.py" "$TEMPLATE" "$UNPACKED/" | tail -1
+
+# ── 1b. 로고 훅: references/logo.png (또는 LOGO=경로) 가 있으면 표지 레이아웃 이미지 교체 ──
+if [ -f "$LOGO" ] && [ -f "$UNPACKED/ppt/media/image1.png" ]; then
+  cp "$LOGO" "$UNPACKED/ppt/media/image1.png"
+  echo "  logo: ppt/media/image1.png ← $LOGO"
+fi
 
 # ── 2. N_CONTENT개 슬라이드 추가 (slideLayout5 = contents) ────────
 for i in $(seq 1 "$N_CONTENT"); do
@@ -103,6 +122,11 @@ fi
 # ── 5. 빌드 스크립트 실행 (사용자 작성 콘텐츠 → slide{N}.xml) ──
 echo "─── Running $BUILD_PY ───"
 TARGET_UNPACKED="$UNPACKED" python3 "$BUILD_PY"
+
+# ── 5b. 프로필 적용 (슬라이드 + 레이아웃 하단 크레딧) + 잔존 검사 ──
+echo "─── apply_profile.py ($PROFILE) ───"
+python3 "$APPLY_PROFILE" --profile "$PROFILE" "$UNPACKED/ppt"
+# 값이 비어 플레이스홀더가 남으면 apply_profile.py 가 exit 2 → set -e 가 빌드를 중단시킴
 
 # ── 6. TOC ↔ 본문 검증 ───────────────────────────────────────────
 echo "─── verify_toc.py ───"

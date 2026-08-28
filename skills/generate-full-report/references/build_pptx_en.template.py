@@ -17,6 +17,9 @@ NS = ('xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" '
       'xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"')
 
 LANG = 'en-US'
+# PROFILE: 표지 작성자·맺음말 연락처는 AUTHOR_EN / PHONE_EN / EMAIL 플레이스홀더로 두고,
+# build_pptx.sh 가 슬라이드 작성 직후 references/profile.json 값으로 자동 치환한다
+# (TEMPLATE.pptx 레이아웃 하단 크레딧 포함).
 
 def esc(t): return str(t).replace('&','&amp;').replace('<','&lt;').replace('>','&gt;')
 
@@ -201,7 +204,7 @@ save(1, sld(f'''
       <p:txBody><a:bodyPr anchor="ctr" bIns="0" lIns="0" rIns="0" tIns="0" wrap="square"/>
         <a:lstStyle/>
         <a:p><a:pPr algn="ctr"><a:buNone/></a:pPr>
-          {rr('Dong Hyung Shin  |  2026.04.08', sz=1600, color='555555')}
+          {rr('{AUTHOR_EN}  |  2026.04.08', sz=1600, color='555555')}
         <a:endParaRPr/></a:p>
       </p:txBody></p:sp>
 '''))
@@ -545,9 +548,9 @@ closing_xml = f'''<?xml version="1.0" encoding="utf-8"?>
         <a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:noFill/><a:ln><a:noFill/></a:ln></p:spPr>
       <p:txBody><a:bodyPr anchor="ctr" bIns="0" lIns="0" rIns="0" tIns="0" wrap="square"/>
         <a:lstStyle/>
-        <a:p><a:pPr algn="ctr"><a:buNone/></a:pPr>{rr('Dong Hyung Shin', sz=2000, bold=True, color='1A3A6B')}<a:endParaRPr/></a:p>
-        <a:p><a:pPr algn="ctr"><a:buNone/></a:pPr>{rr('+82-10-2202-8761', sz=1800, color='555555')}<a:endParaRPr/></a:p>
-        <a:p><a:pPr algn="ctr"><a:buNone/></a:pPr>{rr('donghyung.shin@gmail.com', sz=1800, color='555555')}<a:endParaRPr/></a:p>
+        <a:p><a:pPr algn="ctr"><a:buNone/></a:pPr>{rr('{AUTHOR_EN}', sz=2000, bold=True, color='1A3A6B')}<a:endParaRPr/></a:p>
+        <a:p><a:pPr algn="ctr"><a:buNone/></a:pPr>{rr('{PHONE_EN}', sz=1800, color='555555')}<a:endParaRPr/></a:p>
+        <a:p><a:pPr algn="ctr"><a:buNone/></a:pPr>{rr('{EMAIL}', sz=1800, color='555555')}<a:endParaRPr/></a:p>
       </p:txBody></p:sp>
     <p:sp><p:nvSpPr><p:cNvPr id="13" name="closing_quote"/><p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr>
       <p:spPr><a:xfrm><a:off x="162800" y="4480000"/><a:ext cx="8818500" cy="400000"/></a:xfrm>

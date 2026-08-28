@@ -60,7 +60,7 @@ Zone 5 (y=4715475, h=130000) : Source 출처 (회색 소자)
 [제목]      큰 텍스트, 중앙 정렬
 [부제목]    중간 크기, 중앙 정렬
 [날짜]      소자, 중앙 정렬
-[작성자]    "DH Shin (신동형)" / "Dong Hyung Shin"
+[작성자]    KR "{AUTHOR_KR}" / EN "{AUTHOR_EN}"   ← references/profile.json (apply_profile.py 치환)
 [해시태그]  소자 이탤릭, KR본=한국어, EN본=영어
 ```
 
@@ -95,9 +95,9 @@ Zone 5 (y=4715475, h=130000) : Source 출처 (회색 소자)
 ● 사례 연구나 협업에 관심 있는 기업 및 기관의 연락을 환영합니다.
 ● 보고서, 출판, 강연 문의는 편하게 연락 주세요.
 
-신동형
-010-2202-8761
-donghyung.shin@gmail.com
+{AUTHOR_KR}
+{PHONE_KR}
+{EMAIL}
 ```
 
 ### 영어
@@ -108,9 +108,9 @@ donghyung.shin@gmail.com
 ● Companies or organizations interested in case studies or collaboration are welcome.
 ● For inquiries regarding reports, book publications, or speaking engagements, please feel free to reach out.
 
-Dong Hyung Shin
-+82-10-2202-8761
-donghyung.shin@gmail.com
+{AUTHOR_EN}
+{PHONE_EN}
+{EMAIL}
 ```
 
 ---

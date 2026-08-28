@@ -9,6 +9,20 @@ const {
 const fs = require('fs');
 const path = require('path');
 
+// ── PROFILE GUARD ───────────────────────────────────────────────────────────
+// 작성자 줄의 AUTHOR_KR / AUTHOR_EN (중괄호 플레이스홀더) 는 실행 전에
+//   python3 references/apply_profile.py build_kr.js build_en.js
+// 로 references/profile.json 값을 치환한다. 치환되지 않은 채 실행되면 여기서 중단한다.
+{
+  const src = fs.readFileSync(__filename, 'utf8');
+  const left = src.match(/\{(AUTHOR_KR|AUTHOR_EN|PHONE_KR|PHONE_EN|EMAIL)\}/g);
+  if (left) {
+    console.error('❌ 프로필 플레이스홀더 잔존: ' + [...new Set(left)].join(' ') +
+      '  →  python3 references/apply_profile.py ' + path.basename(__filename));
+    process.exit(2);
+  }
+}
+
 const EN = { ascii: 'Arial', eastAsia: 'Arial', hAnsi: 'Arial' };
 const F  = EN;
 
@@ -164,7 +178,7 @@ const doc = new Document({
       }),
       new Paragraph({
         children: [new TextRun({
-          text: 'April 8, 2026  |  By: DH Shin (Dong Hyung Shin)',
+          text: 'April 8, 2026  |  By: {AUTHOR_EN}',
           size: 18, font: F, color: '555555',
         })],
         alignment: AlignmentType.CENTER,

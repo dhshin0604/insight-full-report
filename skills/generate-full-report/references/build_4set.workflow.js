@@ -195,6 +195,7 @@ ${JSON.stringify(chapters).slice(0, 6000)}`
       prompt: `1) content.claims 를 claims.json 으로 저장.
 2) 정본 템플릿을 cp 후 아래 content 로 치환해 ${t.dt.toUpperCase()}(${t.lang}) 를 빌드하라.
    챕터 visual 계획이 있으면 ${REF}/visual-catalog.md 레시피로 시각요소 생성.
+프로필: Word 는 cp 직후 python3 ${REF}/apply_profile.py build_${t.lang}.js 로 작성자·연락처 치환 (PPTX 는 build_pptx.sh 가 자동 적용).
 빌드 명령: ${verb}
 content: ${JSON.stringify(content).slice(0, 8000)}
 반환 {lang, dt, unpacked, output, gateJson}`

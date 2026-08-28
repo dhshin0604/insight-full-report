@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # copy_to_insights.sh — outputs/ 의 {주제}_*.docx/pptx 4종을
-# OneDrive\신동형인사이트\{주제}_{YYYYMMDD}\ 디렉터리로 일괄 보관한다.
+# OneDrive\{WORKSPACE_DIRNAME}\{주제}_{YYYYMMDD}\ 디렉터리로 일괄 보관한다. (profile.json 의 WORKSPACE_DIRNAME)
 #
 # 사용법:
 #   bash references/copy_to_insights.sh HumanoidWP2025 20260426

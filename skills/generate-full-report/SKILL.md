@@ -94,7 +94,7 @@ Q6. 본문에 수치를 쓰기 위한 전제 조건은?
 | `ShadingType.SOLID` 사용 | `ShadingType.CLEAR` |
 | `<p:ph>` placeholder를 여러 shape에 사용 | 모든 Zone helper의 `<p:nvPr>` 는 빈 `<p:nvPr/>` |
 | 한국어 인용부호 `'단어'` 그대로 | `「단어」` 로 변환 |
-| 영어본 전화번호 다른 형식 | `+82-10-2202-8761` |
+| 영어본 전화번호 다른 형식 | 국제 표기 `{PHONE_EN}` (예: +82-10-0000-0000, profile.json 값) |
 | 한국어 차트에 NanumGothic 외 폰트 | NanumGothic 필수, 영어는 Arial/DejaVu Sans |
 | 산출물을 `/sessions/$USER_SESSION/mnt/outputs` 로 저장 | Phase 0 의 `$WORKSPACE` (사용자 OneDrive 영구 폴더) 로 저장 |
 | Phase 0 를 생략 | Phase 0 는 **필수**. 저장 경로를 먼저 확정한 뒤 빌드 시작 |
@@ -119,7 +119,7 @@ Q6. 본문에 수치를 쓰기 위한 전제 조건은?
 작업 시작 전 반드시 확인:
 1. **소스**: URL / YouTube / PDF / DOCX / 텍스트 직접
 2. **제목 + 부제목**: 보고서 제목과 부제목 (콜론 통합용)
-3. **작성자**: 기본값 KR=`신동형`, EN=`DH Shin`
+3. **작성자·연락처(프로필)**: `references/profile.json` 의 AUTHOR_KR / AUTHOR_EN / PHONE_KR / PHONE_EN / EMAIL. 비어 있으면 여기서 함께 질문 → 작업 폴더 `./profile.json` 에 기록 (아래 **PROFILE** 절)
 4. **주제 슬러그(폴더/파일명용)**: 한글/영문 혼용 가능, 공백은 언더스코어(`_`)로. 예: `AI에이전트`, `반도체_2026`
 
 > 세션 임시 outputs는 사라지므로 반드시 **사용자의 영구 폴더**로 저장해야 합니다. 아래 Phase 0 를 건너뛰지 마세요.
@@ -127,16 +127,41 @@ Q6. 본문에 수치를 쓰기 위한 전제 조건은?
 
 ---
 
+## 👤 PROFILE — 작성자·연락처·저장 경로 (필수)
+
+이 저장소에는 특정인의 이름·전화·이메일·저장 경로가 하드코딩되어 있지 않습니다. 정본 템플릿(Word 표지 작성자 줄, PPTX 표지·맺음말)과 `TEMPLATE.pptx` 의 모든 레이아웃 하단 크레딧 줄에 아래 플레이스홀더가 들어 있고, `references/profile.json` 의 값으로 치환됩니다.
+
+| 키 | 들어가는 곳 | 예 |
+|---|---|---|
+| `AUTHOR_KR` | KR Word 표지 작성자, KR PPTX 표지·맺음말 | 홍길동 |
+| `AUTHOR_EN` | EN Word 표지 작성자, EN PPTX 표지·맺음말, 모든 슬라이드 하단 크레딧 | Gildong Hong |
+| `PHONE_KR` | KR PPTX 맺음말 | 010-0000-0000 |
+| `PHONE_EN` | EN PPTX 맺음말 (국제 표기) | +82-10-0000-0000 |
+| `EMAIL` | KR/EN PPTX 맺음말, 모든 슬라이드 하단 크레딧 | name@example.com |
+| `WORKSPACE_ROOT` | Phase 0 영구 저장 루트 (Windows 경로) | C:\Users\<계정>\OneDrive\인사이트보고서 |
+| `WORKSPACE_DIRNAME` | Phase 0 mount 탐색용 폴더명 | 인사이트보고서 |
+
+### 규칙
+1. **프로필 파일은 자동 선택된다** — `PROFILE` 환경변수 > 작업 폴더의 `./profile.json` > `references/profile.json` 순서로, 필수 5개 키가 모두 찬 파일을 고른다. 어느 파일이 쓰이는지는 `python3 references/apply_profile.py --which` 로 확인한다.
+2. `references/profile.json` 에 값이 이미 모두 있으면 → 그대로 사용하고 **다시 묻지 않는다**.
+3. 비어 있으면 → 사전 확인(AskUserQuestion)에서 이름·연락처를 함께 묻고, **작업 폴더에 `./profile.json` 을 만들어 기록한다**(스킬 폴더는 읽기 전용일 수 있음). 별도 환경변수 없이 이후 빌드가 자동으로 이 파일을 집는다.
+4. Word: `cp` 직후 `python3 references/apply_profile.py build_kr.js build_en.js`. 치환 없이 실행하면 스크립트 상단 PROFILE GUARD 가 exit 2 로 중단한다.
+5. PPTX: `build_pptx.sh` 가 슬라이드 작성 직후 `unpacked_<lang>/ppt` 전체(슬라이드 + 레이아웃 크레딧)에 자동 적용한다. 따로 붙일 인자가 없다.
+6. 로고: 표지 레이아웃의 이미지는 빈(투명) 이미지다. `references/logo.png`(권장 315×60px, 투명 배경)를 두거나 `LOGO=경로` 환경변수를 주면 빌드 시 자동 교체된다.
+7. 플레이스홀더 원문이 산출물에 남으면 안 된다 — `apply_profile.py` 와 `build_pptx.sh` 가 잔존 시 빌드를 중단하고, 무엇이 비었는지와 해결책을 출력한다.
+
+---
+
 ## Phase 0: 출력 폴더 준비 (영구 저장 경로 확정) — **필수**
 
 > **Why this phase exists**: 예전 버전은 `/sessions/$USER_SESSION/mnt/outputs` 로 저장했는데 이 경로는 세션 종료와 함께 삭제되고, Windows 탐색기에서 열면 "위치를 사용할 수 없습니다" 오류가 발생합니다. 이제부터는 **사용자의 OneDrive 영구 폴더**에 직접 저장합니다.
 
-### 저장 경로 규칙 (고정)
+### 저장 경로 규칙 (profile.json 의 WORKSPACE_ROOT / WORKSPACE_DIRNAME)
 
 ```
-루트    : C:\Users\dongh\OneDrive\신동형인사이트\
+루트    : {WORKSPACE_ROOT}\                        ← 예: C:\Users\<계정>\OneDrive\인사이트보고서\
 하위폴더 : {주제}_{YYYYMMDD}\
-최종    : C:\Users\dongh\OneDrive\신동형인사이트\{주제}_{YYYYMMDD}\
+최종    : {WORKSPACE_ROOT}\{주제}_{YYYYMMDD}\
           ├─ {주제}_KR_Report_{YYYYMMDD}.docx
           ├─ {주제}_EN_Report_{YYYYMMDD}.docx
           ├─ {주제}_KR_Presentation_{YYYYMMDD}.pptx
@@ -145,25 +170,23 @@ Q6. 본문에 수치를 쓰기 위한 전제 조건은?
 
 ### STEP 0-A — 루트 폴더 mount (한 번)
 
-`mcp__cowork__request_cowork_directory` 를 호출해 루트 폴더를 연결합니다:
+`mcp__cowork__request_cowork_directory` 를 호출해 루트 폴더 `{WORKSPACE_ROOT}` 를 연결합니다.
 
-```
-path: C:\Users\dongh\OneDrive\신동형인사이트
-```
-
-> 폴더가 아직 없으면 사용자에게 먼저 생성을 안내하거나, OneDrive 루트만 mount 한 뒤 `mkdir -p` 로 `신동형인사이트` 하위를 만듭니다.
+> 폴더가 아직 없으면 사용자에게 먼저 생성을 안내하거나, 상위 폴더(OneDrive 등)만 mount 한 뒤 `mkdir -p` 로 `{WORKSPACE_DIRNAME}` 하위를 만듭니다.
 
 ### STEP 0-B — 마운트 경로 감지 (동적 탐색, `$USER_SESSION` 미의존)
 
 ```bash
+WORKSPACE_DIRNAME="<profile.json 의 WORKSPACE_DIRNAME>"     # 예: 인사이트보고서
+
 # 세션 mnt 루트 자동 감지
 SESSION_MNT=$(ls -d /sessions/*/mnt 2>/dev/null | head -1)
 
-# 1순위: 사용자가 직접 mount한 '신동형인사이트' 폴더
-DEST_ROOT=$(find "$SESSION_MNT" -maxdepth 3 -type d -name '신동형인사이트' 2>/dev/null | head -1)
+# 1순위: 사용자가 직접 mount한 WORKSPACE_DIRNAME 폴더
+DEST_ROOT=$(find "$SESSION_MNT" -maxdepth 3 -type d -name "$WORKSPACE_DIRNAME" 2>/dev/null | head -1)
 
-# 2순위: OneDrive 하위
-[ -z "$DEST_ROOT" ] && DEST_ROOT=$(find "$SESSION_MNT" -maxdepth 4 -type d -path '*OneDrive*신동형인사이트*' 2>/dev/null | head -1)
+# 2순위: OneDrive 등 상위 폴더 하위
+[ -z "$DEST_ROOT" ] && DEST_ROOT=$(find "$SESSION_MNT" -maxdepth 4 -type d -path "*${WORKSPACE_DIRNAME}*" 2>/dev/null | head -1)
 
 # 3순위: fallback — 세션 outputs (경고 표시 후 사용, 영구 저장은 실패)
 if [ -z "$DEST_ROOT" ]; then
@@ -189,7 +212,7 @@ echo "WORKSPACE = $WORKSPACE"
 ### STEP 0-D — 자기 점검
 
 - [ ] `$WORKSPACE` 가 `/sessions/*/mnt/` 아래에 존재 (`ls -la "$WORKSPACE"` OK)
-- [ ] Windows 측 경로 `C:\Users\dongh\OneDrive\신동형인사이트\{주제}_{YYYYMMDD}\` 에 해당
+- [ ] Windows 측 경로 `{WORKSPACE_ROOT}\{주제}_{YYYYMMDD}\` 에 해당
 - [ ] 세션 임시 경로(`/sessions/*/mnt/outputs`)는 최종 저장소로 사용하지 않음
 
 ---
@@ -396,6 +419,10 @@ NODE_PATH=/usr/local/lib/node_modules_global/lib/node_modules node -e "require('
 cp references/build_kr.template.js build_kr.js
 cp references/build_en.template.js build_en.js
 
+# 1.5 프로필 치환 (표지 작성자 줄) — 프로필 파일은 자동 선택(PROFILE > ./profile.json > references/profile.json)
+#     값이 비어 남으면 exit 2, 미치환 실행 시 build_*.js 상단 PROFILE GUARD 가 중단
+python3 references/apply_profile.py build_kr.js build_en.js
+
 # 2. 내용 치환 (제목, 본문, 챕터 등) — 헬퍼 시그니처는 변경 금지
 
 # 3. 문법 체크 후 실행
@@ -436,6 +463,8 @@ cp references/build_pptx_en.template.py build_pptx_en.py
 bash references/build_pptx.sh kr build_pptx_kr.py {주제}_KR_Presentation_{YYYYMMDD}.pptx
 bash references/build_pptx.sh en build_pptx_en.py {주제}_EN_Presentation_{YYYYMMDD}.pptx
 ```
+
+> 오케스트레이터가 프로필을 슬라이드+레이아웃 크레딧에 자동 적용하고(작업 폴더 `./profile.json` 이 있으면 그쪽을 우선), `references/logo.png` 가 있으면 표지 로고를 교체합니다.
 
 > 게이트까지 한 번에 돌리려면 `build_pptx_checked.sh` 사용 (빌드 + gate_report.py 래퍼).
 
@@ -507,8 +536,8 @@ def rr(text, sz=None, bold=False, color=None, lang='ko', u='none'):
 - **모든 Zone helper의 `<p:nvPr>`는 빈 `<p:nvPr/>`** — 다중 placeholder 충돌 → "읽을 수 없습니다" 에러.
 
 ### 맺음말 슬라이드 (고정 — 정본 템플릿에 이미 포함)
-- 한국어: "감사합니다." + 3개 안내 + `신동형 | 010-2202-8761 | donghyung.shin@gmail.com`
-- 영어: "Thank You." + 3개 안내 + `DH Shin | +82-10-2202-8761 | donghyung.shin@gmail.com`
+- 한국어: "감사합니다." + 3개 안내 + `{AUTHOR_KR} | {PHONE_KR} | {EMAIL}` (profile.json)
+- 영어: "Thank You." + 3개 안내 + `{AUTHOR_EN} | {PHONE_EN} | {EMAIL}` (profile.json)
 
 ---
 
@@ -566,7 +595,7 @@ cp claims.json manifest.json              "$WORKSPACE/" 2>/dev/null || true
 ls -la "$WORKSPACE"
 ```
 
-> Phase 0 의 `$WORKSPACE` 가 이미 OneDrive `신동형인사이트\{주제}_{YYYYMMDD}` 이므로 별도 아카이브 복사가 필요 없습니다. (Phase 0 fallback 으로 세션 outputs 를 쓴 경우에만 `references/copy_to_insights.ps1` 또는 `copy_to_insights.sh {주제} {YYYYMMDD}` 로 OneDrive 보관을 시도합니다.)
+> Phase 0 의 `$WORKSPACE` 가 이미 `{WORKSPACE_ROOT}\{주제}_{YYYYMMDD}` 이므로 별도 아카이브 복사가 필요 없습니다. (Phase 0 fallback 으로 세션 outputs 를 쓴 경우에만 `references/copy_to_insights.ps1` 또는 `copy_to_insights.sh {주제} {YYYYMMDD}` 로 OneDrive 보관을 시도합니다.)
 
 ### 7-B — present_files 안전 검증 (필수)
 
@@ -686,7 +715,7 @@ G. FINALIZE  (observability)            manifest.json(plan·claims 통계) 기�
 - [ ] `rr()` 의 `u='none'` 기본값
 - [ ] Zone 3 solidFill 없음 + 별도 밑줄 사각형
 - [ ] Zone 1~5 모두 존재, KEY MESSAGE 완결문장, Zone5 Source 표기
-- [ ] 영어본 전화번호 `+82-10-2202-8761`
+- [ ] 영어본 전화번호 국제 표기 (profile.json PHONE_EN), 플레이스홀더 잔존 0건
 - [ ] **맺음말 슬라이드가 sldIdLst의 마지막** (오케스트레이터 자동)
 - [ ] **slide3 layout3→layout5 보정 완료** (오케스트레이터 자동)
 - [ ] **`verify_toc.py` 가 PASS** — TOC 챕터 수 = 본문 챕터 수

@@ -7,7 +7,7 @@
 한국어 Word · 영어 Word · 한국어 PowerPoint · 영어 PowerPoint
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-![version](https://img.shields.io/badge/version-0.9.1-blue.svg)
+![version](https://img.shields.io/badge/version-0.9.2-blue.svg)
 ![Claude](https://img.shields.io/badge/Claude-Compatible-purple.svg)
 ![Dynamic Workflow](https://img.shields.io/badge/Dynamic%20Workflow-Harness-red.svg)
 ![WRODING](https://img.shields.io/badge/WRODING-Series-orange.svg)
@@ -23,6 +23,19 @@
 **v0.9.1 "Unified Deep-Verify Edition"** builds the documents with a **dynamic multi-agent workflow harness** (Claude Code [dynamic workflows](https://code.claude.com/docs/en/workflows)) and blocks hallucinated facts with a **Claims-Ledger deep-verification gate** — every number in the output is traced to a source or explicitly marked as an estimate.
 
 v0.9.1은 **동적 워크플로 하니스**로 챕터를 병렬 생성·교차 검증하고, **Claims Ledger 기반 딥 베리피케이션**으로 출처 없는 수치가 최종 문서에 남지 못하게 차단합니다.
+
+---
+
+## What's new in v0.9.2 / 주요 변경점
+
+**Author profile extracted from the templates.** Name, phone, email, and output path moved out of
+`SKILL.md`, the four build templates, `pptx-style-guide.md`, and `TEMPLATE.pptx` into
+`references/profile.json`, applied at build time by `apply_profile.py` with a hard stop if anything
+is left unfilled. Anyone can now clone the repo and produce documents under their own name without
+editing the templates. See **Setup: author profile** above.
+
+작성자 정보를 템플릿에서 분리했습니다. 이름·전화·이메일·저장 경로가 `profile.json` 한 곳으로 모였고,
+빌드 시 자동 치환되며 값이 비면 빌드가 중단됩니다.
 
 ---
 
@@ -118,6 +131,43 @@ ultracode 워크플로로 4종 세트 만들어 — [topic]   # dynamic-workflow
 
 ---
 
+## Setup: author profile / 작성자 프로필 (v0.9.2)
+
+The templates carry **no hard-coded name, phone, email, or output path**. Your details live in one
+file, `skills/generate-full-report/references/profile.json`, and are substituted into the Word cover
+line, the PPTX cover and closing slide, and the credit line at the bottom of every layout.
+
+정본 템플릿에는 이름·전화·이메일·저장 경로가 하드코딩되어 있지 않습니다. 아래 한 파일의 값이 Word 표지,
+PPTX 표지·맺음말, 모든 슬라이드 하단 크레딧 줄로 들어갑니다.
+
+```jsonc
+{
+  "AUTHOR_KR": "홍길동",                 // Word/PPTX cover, closing slide (KR)
+  "AUTHOR_EN": "Gildong Hong",           // EN documents + every slide credit line
+  "PHONE_KR":  "010-0000-0000",
+  "PHONE_EN":  "+82-10-0000-0000",
+  "EMAIL":     "name@example.com",
+  "WORKSPACE_ROOT":    "C:\\Users\\<you>\\OneDrive\\Reports",  // permanent output folder
+  "WORKSPACE_DIRNAME": "Reports"
+}
+```
+
+Fill it once, or leave it empty and answer when the skill asks — it then writes `./profile.json`
+into your working folder. Resolution order is `PROFILE` env var → `./profile.json` → the bundled
+`references/profile.json`; the file that has all five required keys wins.
+
+```bash
+python3 references/apply_profile.py --which        # which profile file will be used
+python3 references/apply_profile.py build_kr.js    # Word: substitute before running the build
+#          PPTX: build_pptx.sh applies the profile automatically
+```
+
+If any value is still empty the build **stops** and prints what is missing, so a placeholder such as
+`{AUTHOR_KR}` can never reach a finished document. Drop a `references/logo.png` (315×60px,
+transparent) to put your own logo on the cover; without one the logo area stays blank.
+
+---
+
 ## How it works / 작동 원리
 
 ```
@@ -144,7 +194,7 @@ Content generation, fact verification, and document assembly are **separate, ind
 
 ```
 insight-full-report/
-├── .claude-plugin/                       # plugin manifest (v0.9.1)
+├── .claude-plugin/                       # plugin manifest (v0.9.2)
 ├── assets/                               # WRODING branding, banner, diagrams
 ├── skills/generate-full-report/
 │   ├── SKILL.md                          # the canonical procedure (gates, phases)
@@ -156,6 +206,7 @@ insight-full-report/
 │       ├── quality_rubric.md             # 8-criteria LLM-judge rubric
 │       ├── verify_claims.py / verify_content.py / verify_toc.py / verify_lang_purity.py
 │       ├── gate_report.py                # unified 4-gate verdict
+│       ├── apply_profile.py / profile.json  # author & contact profile (see Setup)
 │       ├── build_pptx.sh / build_pptx_checked.sh
 │       └── build_*.template.{js,py} + TEMPLATE.pptx
 ├── skills/quality-core/                  # standalone quality core (v0.1)
@@ -191,6 +242,7 @@ insight-full-report/
 - [x] Dynamic-workflow harness (v0.9)
 - [x] Deep verification / claims ledger (v0.9)
 - [x] Auto-numbered Word chapters (v0.9.1)
+- [x] Author profile extraction — no personal data in templates (v0.9.2)
 - [x] Standalone `quality-core` skill — extracted quality core (v0.1)
 
 ---

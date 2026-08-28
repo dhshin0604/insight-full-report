@@ -1,10 +1,25 @@
 {
   "name": "insight-full-report",
-  "version": "0.9.1",
-  "description": "신동형 인사이트 4종 문서 생성기 (Word KR+EN, PowerPoint KR+EN). v0.9.1 Unified Deep-Verify Edition: 동적 워크플로(ultracode) 하니스 내장, Deep Verification(Claims Ledger 기반 할루시네이션 차단), So-What 인사이트 프레임워크, 시각화 카탈로그, Word 챕터 자동 번호(H1C/H2C + HEADNUM 게이트), 4중 품질 게이트(toc/content/claims/judge).",
+  "version": "0.9.2",
+  "description": "신동형 인사이트 4종 문서 생성기 (Word KR+EN, PowerPoint KR+EN). v0.9.1 Unified Deep-Verify Edition: 동적 워크플로(ultracode) 하니스 내장, Deep Verification(Claims Ledger 기반 할루시네이션 차단), So-What 인사이트 프레임워크, 시각화 카탈로그, Word 챕터 자동 번호(H1C/H2C + HEADNUM 게이트), 4중 품질 게이트(toc/content/claims/judge). v0.9.2: 작성자·연락처를 references/profile.json 플레이스홀더로 분리(apply_profile.py) — 배포본에 개인 연락처가 남지 않습니다.",
   "author": {
     "name": "DH Shin (신동형)",
     "email": "donghyung.shin@gmail.com"
   },
-  "keywords": ["report", "presentation", "word", "pptx", "korean", "analyst", "insight", "신동형", "deterministic", "drift-proof", "dynamic-workflow", "harness", "deep-verification", "fact-check"]
+  "keywords": [
+    "report",
+    "presentation",
+    "word",
+    "pptx",
+    "korean",
+    "analyst",
+    "insight",
+    "신동형",
+    "deterministic",
+    "drift-proof",
+    "dynamic-workflow",
+    "harness",
+    "deep-verification",
+    "fact-check"
+  ]
 }

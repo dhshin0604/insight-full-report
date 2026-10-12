@@ -61,8 +61,12 @@
 
 ### 올릴 때 (Upgrade notes)
 
-- **v0.9.x 를 쓰는 중이면 PPTX 빌드가 멈출 수 있음** : v0.9.x 는 외부 pptx 스킬의 스크립트 경로에 기대는데, 최근 Claude 환경에서는 그 경로에 스크립트가 없음. v1.0 으로 올리면 해결됨
+- **v0.9.2 이하를 쓰는 중이면 PPTX 빌드가 멈출 수 있음** : 외부 pptx 스킬의 `unpack.py`·`pack.py` 에 기대는데, 최근 Claude 환경에는 그 스크립트가 없음. v0.9.3 은 그 부분을 고쳤지만 여전히 pptx 스킬의 `add_slide.py`·`clean.py` 가 필요함. v1.0 은 pptx 스킬 없이 빌드됨
 - 플러그인을 업데이트하면 플러그인 폴더가 새로 바뀜. 스킬 폴더 안 `profile.json` 에 넣어 둔 값은 다시 넣어야 하므로 작업 폴더의 `./profile.json` 이나 `PROFILE` 환경변수를 권장
+
+## [0.9.3]
+
+- Anthropic pptx 스킬 2026-10 판 호환 : 그 판에서 `unpack.py`·`pack.py` 가 빠지고 `add_slide.py` 가 `sldIdLst` 등록까지 맡게 되어 오케스트레이터가 unpack 단계에서 멈추던 문제를 고침. `build_pptx.sh` 가 unpack/pack 을 내장하고, `sldIdLst` 를 관계(rels) 기준으로 정합하고, pack 뒤 `validate.py --original` 검증을 붙임. v1.0 은 같은 문제를 pptx 스킬 의존 자체를 없애는 방식(`ooxml_tools.py`)으로 풀고, validate.py 는 있을 때만 선택 검증으로 이어 씀
 
 ## [0.9.2] - 2026-08-29
 

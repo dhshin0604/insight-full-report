@@ -471,6 +471,7 @@ bash references/build_pptx.sh en build_pptx_en.py {주제}_EN_Presentation_{YYYY
 | 8 | strip Google | `strip_google_extensions.py --unpacked` 로 Google Slides 잔존물 제거 |
 | 9 | pack | `ooxml_tools.py pack` (XML 문법 검사 후 묶음) |
 | 10 | 최종 검증 | `ooxml_tools.py check` 로 구조 확인, Google 잔존물 0, metadata 0 |
+| 11 | validate (선택) | Anthropic pptx 스킬의 `scripts/office/validate.py` 가 있으면 `--original TEMPLATE.pptx` 로 스키마·관계 검증(실패 시 중단). 없으면 건너뜀, `SKIP_VALIDATE=1` 로 끔 (v0.9.3 에서 이어 옴) |
 
 이 시퀀스는 모델이 임의로 우회하거나 단계를 건너뛸 수 없도록 외부화되어 있습니다. **오케스트레이터를 사용하지 않고 직접 unpack/pack을 시도하지 마세요.**
 

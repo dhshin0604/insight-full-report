@@ -75,7 +75,10 @@ bash references/build_pptx.sh kr build_pptx_kr.py Output_KR.pptx
 #   5. TARGET_UNPACKED=unpacked_kr python3 build_pptx_kr.py   (슬라이드 XML 작성)
 #   6. apply_profile.py, verify_toc.py
 #   7. ooxml_tools.py clean, strip_google_extensions.py, ooxml_tools.py pack, ooxml_tools.py check
+#   8. (선택) pptx 스킬의 scripts/office/validate.py OUT.pptx --original TEMPLATE.pptx  (있을 때만, SKIP_VALIDATE=1 로 끔)
 ```
+
+> v0.9.3 은 Anthropic pptx 스킬 2026-10 판(unpack.py·pack.py 제거) 호환을 위해 unpack/pack 을 내장했고, v1.0 은 슬라이드 추가·정리까지 `ooxml_tools.py` 로 옮겨 pptx 스킬 없이도 빌드됨. pptx 스킬이 있으면 그 validate.py 만 마지막 검증에 씀
 
 레이아웃 : slideLayout1 = 표지, slideLayout2 = 맺음말, slideLayout3 = 챕터 간지, slideLayout4 = INDEX, slideLayout5 = 본문(default_contents)
 

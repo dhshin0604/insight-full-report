@@ -407,7 +407,7 @@ P8 전달 ← P7 독립 검토 ← P6 게이트·재시도 ← P5 빌드(그림 
 
 ## 9. v0.9.x 에서 올릴 때 / Upgrading
 
-- **v0.9.x 의 PPTX 빌드는 멈출 수 있음.** v0.9.x 는 Claude 환경에 들어 있던 외부 pptx 스킬 스크립트(`unpack.py`, `pack.py` 등)의 경로에 기대는데, 최근 환경에는 그 경로에 스크립트가 없음. v1.0 은 자체 `ooxml_tools.py` 로 빌드하므로 이 문제가 없음
+- **v0.9.2 이하의 PPTX 빌드는 멈출 수 있음.** 외부 pptx 스킬의 `unpack.py`, `pack.py` 에 기대는데, 최근 Claude 환경에는 그 스크립트가 없음. v0.9.3 은 이를 고쳤지만 여전히 pptx 스킬의 `add_slide.py`, `clean.py` 가 있어야 함. v1.0 은 자체 `ooxml_tools.py` 로 빌드하므로 pptx 스킬이 없어도 됨 (있으면 그 `validate.py` 로 마지막 검증만 함)
 - Claude Code : `claude plugin marketplace update wroding` → `claude plugin update insight-full-report@wroding` → 재시작. 예전에 zip 이나 폴더 복사로 설치했다면 그 플러그인을 지우고 2절대로 다시 설치
 - Claude 앱 : 예전 플러그인이나 스킬을 끄고 2-2 의 방법 A 나 B 로 다시 설치
 - 스킬 폴더 안 `profile.json` 에 넣어 둔 값은 업데이트 때 사라지므로 작업 폴더 `./profile.json` 으로 옮김
@@ -465,6 +465,7 @@ insight-full-report/
 | 버전 | 핵심 |
 |---|---|
 | **v1.0.0** (2026-10-12) | image-deck, report-harness 스킬 추가. 외부 pptx 스킬 없이 PPTX 빌드(`ooxml_tools.py`). 공용 금지어 사전과 줄표·AI 티·가리킴 검사. 마켓플레이스, doctor, selftest, package |
+| v0.9.3 | Anthropic pptx 스킬 2026-10 판 호환 (unpack/pack 내장, sldIdLst 정합, validate 검증) |
 | v0.9.2 (2026-08-29) | 작성자 정보를 `profile.json` 으로 분리 |
 | v0.9.1 | Word 헤딩 자동 번호와 HEADNUM 게이트 |
 | v0.9 | 동적 워크플로 하네스, Claims Ledger, 4중 게이트 |

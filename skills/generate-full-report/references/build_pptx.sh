@@ -20,6 +20,8 @@
 #   PROFILE    : profile.json 경로 (기본 자동 선택 : ./profile.json > references/profile.json)
 #   LOGO       : 표지 로고 PNG (기본 references/logo.png, 없으면 템플릿의 빈 이미지 유지)
 #   PYTHON     : 파이썬 실행 파일 (기본 python3)
+#   PPTX_SKILL : (선택) Anthropic pptx 스킬 폴더. scripts/office/validate.py 가 있으면 마지막에 스키마 검증
+#   SKIP_VALIDATE=1 : 위 validate.py 검증을 끔
 set -euo pipefail
 # Windows(Git Bash) 의 cp949 파이프에서도 파이썬 출력이 멈추지 않게 UTF-8 로 고정
 export PYTHONUTF8=1 PYTHONIOENCODING=utf-8
@@ -112,3 +114,19 @@ if google or meta:
 import os
 print('OK %s (%d bytes) : Google 잔존물 0, metadata 0, zip OK' % (out, os.path.getsize(out)))
 PY
+
+# 11. (선택) Anthropic pptx 스킬의 validate.py 가 있으면 스키마·관계 검증 (v0.9.3 에서 이어 옴)
+#     찾는 곳 : PPTX_SKILL 환경변수 → /mnt/skills/public/pptx → ~/.claude/skills/synced/*/pptx
+#     없으면 건너뜀(위 ooxml_tools check 는 이미 통과). 끄려면 SKIP_VALIDATE=1
+VALIDATE=""
+if [ "${SKIP_VALIDATE:-0}" != "1" ]; then
+  for c in "${PPTX_SKILL:-}" /mnt/skills/public/pptx "$HOME"/.claude/skills/synced/*/pptx; do
+    if [ -n "$c" ] && [ -f "$c/scripts/office/validate.py" ]; then VALIDATE="$c/scripts/office/validate.py"; break; fi
+  done
+fi
+if [ -n "$VALIDATE" ]; then
+  echo "--- validate.py (pptx 스킬) ---"
+  "$PY" "$VALIDATE" "$OUTPUT" --original "$TEMPLATE"
+else
+  echo "  validate.py : 건너뜀 (pptx 스킬 없음 또는 SKIP_VALIDATE=1)"
+fi

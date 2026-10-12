@@ -7,7 +7,7 @@
 한국어 Word · 영어 Word · 한국어 PowerPoint · 영어 PowerPoint
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-![version](https://img.shields.io/badge/version-0.9.2-blue.svg)
+![version](https://img.shields.io/badge/version-0.9.3-blue.svg)
 ![Claude](https://img.shields.io/badge/Claude-Compatible-purple.svg)
 ![Dynamic Workflow](https://img.shields.io/badge/Dynamic%20Workflow-Harness-red.svg)
 ![WRODING](https://img.shields.io/badge/WRODING-Series-orange.svg)
@@ -23,6 +23,24 @@
 **v0.9.1 "Unified Deep-Verify Edition"** builds the documents with a **dynamic multi-agent workflow harness** (Claude Code [dynamic workflows](https://code.claude.com/docs/en/workflows)) and blocks hallucinated facts with a **Claims-Ledger deep-verification gate** — every number in the output is traced to a source or explicitly marked as an estimate.
 
 v0.9.1은 **동적 워크플로 하니스**로 챕터를 병렬 생성·교차 검증하고, **Claims Ledger 기반 딥 베리피케이션**으로 출처 없는 수치가 최종 문서에 남지 못하게 차단합니다.
+
+---
+
+## What's new in v0.9.3 / 주요 변경점
+
+**Compatible with the October 2026 Anthropic `pptx` skill.** That skill dropped
+`scripts/office/unpack.py` and `pack.py`, and its `add_slide.py` now registers `<p:sldIdLst>` itself,
+so the previous orchestrator stopped at the unpack step. `build_pptx.sh` now ships its own
+unpack/pack (zipfile, `[Content_Types].xml` first), reconciles `sldIdLst` against the slide
+relationships (duplicates and orphans removed, missing slides added; identical result with the old or
+the new `add_slide.py`), finds the pptx skill under `/mnt/skills/public/pptx`,
+`~/.claude/skills/synced/*/pptx` or `/sessions/*`, and runs `validate.py --original` after packing.
+Older pptx skills that still have `unpack.py`/`pack.py` keep working unchanged.
+
+2026년 10월판 Anthropic `pptx` 스킬에서 `unpack.py`·`pack.py` 가 사라지고 `add_slide.py` 가 `sldIdLst`
+등록까지 맡게 되면서 기존 오케스트레이터가 unpack 단계에서 멈추던 문제를 고쳤습니다. `build_pptx.sh`
+가 unpack/pack 을 내장하고, `sldIdLst` 를 rels 기준으로 정합하며, pack 뒤 `validate.py` 검증을 붙였습니다.
+구판 pptx 스킬에서도 그대로 동작합니다.
 
 ---
 
@@ -194,7 +212,7 @@ Content generation, fact verification, and document assembly are **separate, ind
 
 ```
 insight-full-report/
-├── .claude-plugin/                       # plugin manifest (v0.9.2)
+├── .claude-plugin/                       # plugin manifest (v0.9.3)
 ├── assets/                               # WRODING branding, banner, diagrams
 ├── skills/generate-full-report/
 │   ├── SKILL.md                          # the canonical procedure (gates, phases)
@@ -243,6 +261,7 @@ insight-full-report/
 - [x] Deep verification / claims ledger (v0.9)
 - [x] Auto-numbered Word chapters (v0.9.1)
 - [x] Author profile extraction — no personal data in templates (v0.9.2)
+- [x] Compatibility with the 2026-10 Anthropic pptx skill — built-in unpack/pack, rels-based sldIdLst, validate gate (v0.9.3)
 - [x] Standalone `quality-core` skill — extracted quality core (v0.1)
 
 ---

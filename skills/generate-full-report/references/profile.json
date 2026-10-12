@@ -1,10 +1,11 @@
 {
-  "_comment": "작성자 프로필. 설치(업로드) 전에 값을 채우면 매 실행마다 묻지 않습니다. 비어 있으면 스킬이 사전 확인 단계에서 사용자에게 묻고, 작업 폴더의 profile.json 사본에 기록한 뒤 PROFILE=./profile.json 으로 빌드합니다. 이 값들은 Word 표지 작성자 줄, PPTX 표지·맺음말·모든 슬라이드 하단 크레딧 줄에 들어갑니다.",
+  "_comment": "작성자 프로필. 설치(업로드) 전에 값을 채우면 매 실행마다 묻지 않음. 비어 있으면 스킬이 사전 확인 단계에서 묻고 작업 폴더의 profile.json 에 기록함. 값은 Word 표지 작성자 줄, PPTX 표지·맺음말·하단 크레딧, 이미지 덱 표지·감사 쪽에 들어감. 같은 플러그인의 image-deck, report-harness 도 이 파일을 마지막 후보로 읽음.",
   "AUTHOR_KR": "",
   "AUTHOR_EN": "",
   "PHONE_KR": "",
   "PHONE_EN": "",
   "EMAIL": "",
+  "BRAND": "",
   "WORKSPACE_ROOT": "",
   "WORKSPACE_DIRNAME": "",
   "_examples": {
@@ -13,7 +14,8 @@
     "PHONE_KR": "010-0000-0000",
     "PHONE_EN": "+82-10-0000-0000",
     "EMAIL": "name@example.com",
-    "WORKSPACE_ROOT": "C:\\Users\\<계정>\\OneDrive\\인사이트보고서",
-    "WORKSPACE_DIRNAME": "인사이트보고서"
+    "BRAND": "Insight Report",
+    "WORKSPACE_ROOT": "C:\\Users\\<계정>\\Documents\\Reports",
+    "WORKSPACE_DIRNAME": "Reports"
   }
 }

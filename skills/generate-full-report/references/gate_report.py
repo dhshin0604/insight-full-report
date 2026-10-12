@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-gate_report.py — 통합 게이트 v0.9 (Lifecycles + eValuations 단일 진실원)
+gate_report.py: 통합 게이트 v0.9 (Lifecycles + eValuations 단일 진실원)
 
 한 번 호출로 다음을 합쳐 하나의 머신 리더블 판정을 만든다:
-  1) verify_toc.py        — 구조(TOC ↔ 본문) 게이트              [기존]
-  2) verify_content.py    — 내용 품질 게이트(규칙 기반)           [기존]
-  3) verify_claims.py     — 수치-출처(Deep Verification) 게이트   [v0.9 신규]
-  4) judge_verdict.json   — LLM-judge 주관 품질 게이트(옵션)      [기존]
+  1) verify_toc.py       : 구조(TOC ↔ 본문) 게이트              [기존]
+  2) verify_content.py   : 내용 품질 게이트(규칙 기반)           [기존]
+  3) verify_claims.py    : 수치-출처(Deep Verification) 게이트   [v0.9 신규]
+  4) judge_verdict.json  : LLM-judge 주관 품질 게이트(옵션)      [기존]
 
 산출물 gate_report.json:
   {
@@ -155,7 +155,7 @@ def main():
     print('  fixes: %d 건' % len(fixes))
     print('  -> %s' % a.out)
     if not overall:
-        print('\n💥 GATE FAILED — fixes[] 를 적용해 재빌드 필요')
+        print('\n💥 GATE FAILED: fixes[] 를 적용해 재빌드 필요')
         sys.exit(1)
     print('\n✅ ALL GATES PASSED')
     sys.exit(0)

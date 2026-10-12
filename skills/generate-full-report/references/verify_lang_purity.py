@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-verify_lang_purity.py — 산출물 본문 언어 정합성 검증
+verify_lang_purity.py: 산출물 본문 언어 정합성 검증
 ================================================================
 원문이 KR/EN이 아닌 자료(중국어 간체/번체, 일본어 등)에서 보고서를 생성할 때
 KR/EN 산출물 본문에 원문 문자가 그대로 남아 있는 드리프트를 잡아낸다.
@@ -186,7 +186,7 @@ def verify(text_items, target_lang: str, kr_max: int, en_max: int):
     if target_lang == 'kr':
         if total_hira > 0 or total_kata > 0:
             fail = True
-            reasons.append(f'KR 본문에 일본어 가나(hiragana={total_hira}, katakana={total_kata}) 잔존 — 0개 필요')
+            reasons.append(f'KR 본문에 일본어 가나(hiragana={total_hira}, katakana={total_kata}) 잔존: 0개 필요')
         if total_hanja > kr_max:
             fail = True
             reasons.append(f'KR 본문 한자(漢字) {total_hanja}개 > 허용치 {kr_max} (KR_HANJA_MAX)')
@@ -212,7 +212,7 @@ def render_report(target, target_lang, totals, reasons, flagged, fail):
         for r in reasons:
             print(f'  • {r}')
     else:
-        print('\n✅ VERIFY OK — 언어 정합성 통과')
+        print('\n✅ VERIFY OK: 언어 정합성 통과')
 
 
 def parse_args():

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-verify_toc.py — TOC ↔ 본문 챕터 일치 검증
+verify_toc.py: TOC ↔ 본문 챕터 일치 검증
 
 PPTX의 INDEX 슬라이드(slide2)에 나열된 로마숫자 챕터(I~VII 등)와
 모든 컨텐츠 슬라이드(z1 헤더의 좌측 텍스트)에서 추출한 챕터 라벨이
@@ -63,7 +63,7 @@ def extract_content_chapters(slides_dir):
             if mm:
                 found[n] = mm.group(1)
                 break
-    # 슬라이드 번호 순으로 정렬, 챕터 라벨만 반환 (중복 제거 — 같은 챕터의 여러 슬라이드 허용)
+    # 슬라이드 번호 순으로 정렬, 챕터 라벨만 반환 (중복 제거: 같은 챕터의 여러 슬라이드 허용)
     seq = []
     last = None
     for n in sorted(found.keys()):
@@ -119,7 +119,7 @@ def main():
         print('\n💥 VERIFY FAILED')
         sys.exit(1)
     else:
-        print(f'\n✅ VERIFY OK — {len(toc)}개 챕터가 TOC와 본문에 모두 정렬되어 있음')
+        print(f'\n✅ VERIFY OK: {len(toc)}개 챕터가 TOC와 본문에 모두 정렬되어 있음')
         sys.exit(0)
 
 

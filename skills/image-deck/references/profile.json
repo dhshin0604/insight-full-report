@@ -1,0 +1,21 @@
+{
+  "_comment": "작성자 프로필 템플릿. 값은 비워 두고 배포함. 덱에 꼭 필요한 값은 AUTHOR_KR, AUTHOR_EN, EMAIL 이며 PHONE_KR 이 비면 감사 쪽에서 전화 줄을 뺌. BRAND 는 표지·감사 쪽 상단 라벨([ BRAND ])이며 비면 Insight Report. 찾는 순서 : 환경변수 PROFILE -> 작업 폴더 ./profile.json -> 이 파일 -> ../generate-full-report/references/profile.json. 값이 모두 비어 있으면 렌더가 종료코드 2 로 멈춤.",
+  "AUTHOR_KR": "",
+  "AUTHOR_EN": "",
+  "PHONE_KR": "",
+  "PHONE_EN": "",
+  "EMAIL": "",
+  "BRAND": "",
+  "WORKSPACE_ROOT": "",
+  "WORKSPACE_DIRNAME": "",
+  "_examples": {
+    "AUTHOR_KR": "홍길동",
+    "AUTHOR_EN": "Gildong Hong",
+    "PHONE_KR": "010-0000-0000",
+    "PHONE_EN": "+82-10-0000-0000",
+    "EMAIL": "name@example.com",
+    "BRAND": "Insight Report",
+    "WORKSPACE_ROOT": "<내 문서 폴더>/Reports",
+    "WORKSPACE_DIRNAME": "Reports"
+  }
+}

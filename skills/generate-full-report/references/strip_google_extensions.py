@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-strip_google_extensions.py — PPTX Google Slides 잔존물 제거
+strip_google_extensions.py: PPTX Google Slides 잔존물 제거
 
 TEMPLATE.pptx가 Google Slides에서 export된 경우 `<p:extLst>` 안에
 `GoogleSlidesCustomDataVersion2` 확장이 남아 있어 Microsoft PowerPoint가

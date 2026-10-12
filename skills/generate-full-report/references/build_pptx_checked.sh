@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# build_pptx_checked.sh — build_pptx.sh + 통합 게이트(1회 실행)
+# build_pptx_checked.sh: build_pptx.sh + 통합 게이트(1회 실행)
 #
 # 기존 오케스트레이터(build_pptx.sh)는 verify_toc 만 내장한다. 이 래퍼는 그 위에
 # 내용 품질 게이트(verify_content)와 (옵션)LLM-judge 를 더해, 한 번의 빌드 결과를
@@ -31,11 +31,11 @@ if [ -d "$UNPACKED" ]; then
       --skill-dir "$SKILL_DIR" ${JUDGE:+--judge "$JUDGE"} --out "gate_${LANG_CODE}.json"
   GATE_RC=$?
 else
-  echo "❌ $UNPACKED 없음 — 빌드가 너무 일찍 실패"; GATE_RC=1
+  echo "❌ $UNPACKED 없음: 빌드가 너무 일찍 실패"; GATE_RC=1
 fi
 
 if [ "$BUILD_RC" -ne 0 ] || [ "$GATE_RC" -ne 0 ]; then
-  echo "↻ 게이트 미통과 — gate_${LANG_CODE}.json 의 fixes[] 를 적용 후 재호출"
+  echo "↻ 게이트 미통과: gate_${LANG_CODE}.json 의 fixes[] 를 적용 후 재호출"
   exit 1
 fi
 echo "✅ build + gate 통과: $OUTPUT"

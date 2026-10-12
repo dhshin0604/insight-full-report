@@ -1,9 +1,9 @@
-# quality_rubric.md — LLM-judge 주관 품질 루브릭 (v0.9)
+# quality_rubric.md: LLM-judge 주관 품질 루브릭 (v0.9)
 
 `verify_content.py` 가 **결정론적으로 잡히는 위반**(과장 형용사·bullet·한자 혼입 등)을
 보고 `verify_claims.py` 가 **수치-출처 정합**을 본다면, 이 루브릭은 코드로 잡기 어려운
 **주관적 품질**을 모델(=judge)이 채점하는 기준이다. judge 는 가능하면 작성자와 **다른
-컨텍스트의 critic 에이전트**가 맡는다(동적 워크플로 Phase D — self-preferential bias 차단).
+컨텍스트의 critic 에이전트**가 맡는다(동적 워크플로 Phase D: self-preferential bias 차단).
 단일 컨텍스트 모드에서는 빌드 후 "비평가 모자"를 쓰고 채점한다.
 산출은 `judge_verdict_{lang}.json`.
 
@@ -47,7 +47,7 @@
      "fix": "Zone2를 '~로 시장이 재편되고 있음.' 형태의 통찰문으로 교체"},
     {"type": "JUDGE_INSIGHT", "loc": "ch3",
      "detail": "사실 요약만 있고 2차 효과 분석 없음",
-     "fix": "So-What 사다리 L3 — 수혜/피해 주체와 행동 함의 단락 추가"}
+     "fix": "So-What 사다리 L3: 수혜/피해 주체와 행동 함의 단락 추가"}
   ]
 }
 ```

@@ -1,25 +1,29 @@
 {
   "name": "insight-full-report",
-  "version": "0.9.2",
-  "description": "신동형 인사이트 4종 문서 생성기 (Word KR+EN, PowerPoint KR+EN). v0.9.1 Unified Deep-Verify Edition: 동적 워크플로(ultracode) 하니스 내장, Deep Verification(Claims Ledger 기반 할루시네이션 차단), So-What 인사이트 프레임워크, 시각화 카탈로그, Word 챕터 자동 번호(H1C/H2C + HEADNUM 게이트), 4중 품질 게이트(toc/content/claims/judge). v0.9.2: 작성자·연락처를 references/profile.json 플레이스홀더로 분리(apply_profile.py) — 배포본에 개인 연락처가 남지 않습니다.",
+  "displayName": "Insight Full Report (신동형 인사이트)",
+  "version": "1.0.0",
+  "description": "신동형 인사이트 보고서 하네스. 4종 문서 생성기(Word KR/EN + 편집 가능한 PPTX KR/EN), 이미지 슬라이드 덱(PNG, PDF, PPTX), 여러 에이전트로 조사·집필·검증하는 보고서 하네스, 범용 품질 코어를 담음. Claims Ledger 수치-출처 게이트, 금지어 사전, 자동 레이아웃 QA, 재시도 3회 이하의 게이트 루프를 씀.",
   "author": {
     "name": "DH Shin (신동형)",
-    "email": "donghyung.shin@gmail.com"
+    "email": "donghyung.shin@gmail.com",
+    "url": "https://github.com/dhshin0604"
   },
+  "homepage": "https://github.com/dhshin0604/insight-full-report",
+  "repository": "https://github.com/dhshin0604/insight-full-report",
+  "license": "MIT",
   "keywords": [
     "report",
-    "presentation",
     "word",
     "pptx",
+    "image-deck",
     "korean",
     "analyst",
     "insight",
     "신동형",
-    "deterministic",
-    "drift-proof",
-    "dynamic-workflow",
     "harness",
+    "multi-agent",
     "deep-verification",
-    "fact-check"
+    "fact-check",
+    "wroding"
   ]
 }

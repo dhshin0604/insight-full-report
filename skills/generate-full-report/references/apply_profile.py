@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""apply_profile.py — 프로필 플레이스홀더 일괄 치환 + 잔존 검사 (handoff edition)
+"""apply_profile.py: 프로필 플레이스홀더 일괄 치환 + 잔존 검사 (handoff edition)
 
 정본 템플릿과 TEMPLATE.pptx 의 레이아웃/맺음말에는 작성자·연락처가 하드코딩되어
 있지 않고 아래 키를 중괄호로 감싼 플레이스홀더로 들어 있다. 이 스크립트가
@@ -12,6 +12,7 @@ references/profile.json 의 값으로 치환하고, 하나라도 남아 있으�
   PHONE_EN    국제 표기 전화번호   예) +82-10-0000-0000
   EMAIL       이메일               예) name@example.com
   (Phase 0 저장 경로용) WORKSPACE_ROOT  WORKSPACE_DIRNAME
+  (이미지 덱 표지 라벨용, 선택) BRAND
 
 사용법:
   python3 references/apply_profile.py build_kr.js build_en.js            # docx 빌드 스크립트
@@ -38,7 +39,7 @@ import re
 import sys
 
 REQUIRED = ['AUTHOR_KR', 'AUTHOR_EN', 'PHONE_KR', 'PHONE_EN', 'EMAIL']
-OPTIONAL = ['WORKSPACE_ROOT', 'WORKSPACE_DIRNAME']
+OPTIONAL = ['WORKSPACE_ROOT', 'WORKSPACE_DIRNAME', 'BRAND']
 KEYS = REQUIRED + OPTIONAL
 TOKEN_RE = re.compile(r'\{(' + '|'.join(KEYS) + r')\}')
 EXTS = ('.xml', '.js', '.py', '.rels', '.ps1', '.sh')
@@ -147,13 +148,13 @@ def main():
             leftovers[path] = left
 
     if replaced:
-        print('apply_profile: 치환 완료 — ' + ', '.join(f'{k}×{n}' for k, n in replaced.items()))
+        print('apply_profile: 치환 완료: ' + ', '.join(f'{k}×{n}' for k, n in replaced.items()))
     elif not args.check:
         print('apply_profile: 치환할 플레이스홀더 없음 (이미 치환됨)')
 
     if leftovers:
         missing = sorted({k for ks in leftovers.values() for k in ks})
-        print('❌ apply_profile: 플레이스홀더 잔존 — 프로필 값이 비어 있습니다: ' + ', '.join(missing))
+        print('❌ apply_profile: 플레이스홀더 잔존: 프로필 값이 비어 있습니다: ' + ', '.join(missing))
         for p, ks in leftovers.items():
             print(f'     {p}: {" ".join("{" + k + "}" for k in ks)}')
         print(f'   → 사용된 프로필 파일: {args.profile}')

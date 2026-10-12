@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-verify_claims.py — Deep Verification 기계 게이트 (v0.9)
+verify_claims.py: Deep Verification 기계 게이트 (v0.9)
 
 claims.json(Claims Ledger)과 빌드 산출물(docx 또는 unpacked pptx)을 대조해
 할루시네이션성 수치를 결정론적으로 차단한다. factcheck-pipeline.md 참조.

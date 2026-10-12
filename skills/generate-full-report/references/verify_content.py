@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-verify_content.py — 내용 품질 게이트 (deterministic content eValuation)
+verify_content.py: 내용 품질 게이트 (deterministic content eValuation)
 
 verify_toc.py 가 '구조(TOC ↔ 본문 챕터)'를 검사한다면, 이 스크립트는 '내용 품질'을
 LLM 없이 규칙 기반으로 채점한다. 결정론적으로 잡을 수 있는 위반만 본다.
@@ -9,12 +9,18 @@ LLM 없이 규칙 기반으로 채점한다. 결정론적으로 잡을 수 있�
 검사 항목 (SKILL.md ANTI-DRIFT / WRODING 프롬프팅에서 유래):
   [E] HYPE_HARD   과장 형용사(혁명적/압도적/유일무이 ...)            -> ERROR
   [W] HYPE_SOFT   완화 대상 형용사(가장/최고/근본적 ...)             -> WARNING(빈도)
-  [E] BULLET      Word 본문 bullet 문자(•▪‣ 등) — docx 전용          -> ERROR
+  [E] BULLET      Word 본문 bullet 문자(•▪‣ 등): docx 전용          -> ERROR
   [E] CJK_KR      한글문서 본문의 '괄호 밖' 독립 한자/가나 토큰        -> ERROR
   [W] CJK_EN      영문문서 본문의 pinyin 없는 단독 中文                -> WARNING
   [W] KEYMSG      PPTX content 슬라이드에 KEY MESSAGE(임./음.) 부재    -> WARNING
   [W] SOURCE      문서 끝 출처/Source 섹션 부재                       -> WARNING
-  [E] HEADNUM     Word 챕터 헤딩 번호(1. / 1.1) 누락·순서 오류 — docx  -> ERROR (v0.9.1)
+  [E] HEADNUM     Word 챕터 헤딩 번호(1. / 1.1) 누락·순서 오류: docx  -> ERROR (v0.9.1)
+  [E/W] DASH      줄표(U+2014) : 영문 ERROR, 한글 WARNING (lexicon.json dash.level)  (v1.0)
+  [W] AI_TONE     AI가 쓴 티가 나는 문형(핵심은, 결국, 이처럼 ...)          -> WARNING (v1.0)
+  [W] POINTER     장과 장을 잇는 예고·안내(다음 장에서 ...)                 -> WARNING (v1.0)
+  [E] BANNED      lexicon.json user_banned (팀 고유 금지 표현)               -> ERROR (v1.0)
+
+금지어 목록은 같은 폴더의 lexicon.json 에서 읽음(없으면 아래 기본 목록). report-harness 의 selfcheck.py 와 같은 사전을 씀.
 
 입력(택1): --unpacked unpacked_kr/  |  --docx report.docx
 공통: --lang kr|en  --json gate_content.json  --judge-extract judge_in.json
@@ -35,6 +41,38 @@ HYPE_HARD_EN = ['revolutionary', 'unprecedented', 'unparalleled', 'world-first',
 HYPE_SOFT_EN = ['ultimate', 'cutting-edge', 'state-of-the-art', 'most advanced']
 
 BULLET_CHARS = ['•', '▪', '‣', '◦', '·', '●', '∙', '￭']
+
+# v1.0 : lexicon.json 이 있으면 그 값을 정본으로 씀 (없으면 위 기본 목록 유지)
+LEXICON = {}
+_lex_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'lexicon.json')
+if os.path.isfile(_lex_path):
+    try:
+        with open(_lex_path, encoding='utf-8') as _f:
+            LEXICON = json.load(_f)
+    except (OSError, ValueError) as _e:
+        sys.stderr.write('WARNING: lexicon.json 읽기 실패 (%s) : 기본 목록 사용\n' % _e)
+        LEXICON = {}
+
+
+def _lex(key, lang, default):
+    v = LEXICON.get(key, {})
+    if isinstance(v, dict):
+        v = v.get(lang)
+    return list(v) if isinstance(v, list) and v else list(default)
+
+
+if LEXICON:
+    HYPE_HARD_KR = _lex('hype_hard', 'kr', HYPE_HARD_KR)
+    HYPE_HARD_EN = _lex('hype_hard', 'en', HYPE_HARD_EN)
+    HYPE_SOFT_KR = _lex('hype_soft', 'kr', HYPE_SOFT_KR)
+    HYPE_SOFT_EN = _lex('hype_soft', 'en', HYPE_SOFT_EN)
+    if isinstance(LEXICON.get('bullets'), list) and LEXICON['bullets']:
+        BULLET_CHARS = list(LEXICON['bullets'])
+DASH_CHARS = (LEXICON.get('dash', {}) or {}).get('chars') or ['\u2014']
+DASH_LEVEL = (LEXICON.get('dash', {}) or {}).get('level') or {'kr': 'warn', 'en': 'error'}
+AI_TONE = {lg: _lex('ai_tone', lg, []) for lg in ('kr', 'en')}
+POINTER = {lg: _lex('pointer', lg, []) for lg in ('kr', 'en')}
+BANNED = {lg: _lex('user_banned', lg, []) for lg in ('kr', 'en')}
 CJK_RE = re.compile(r'[㐀-䶿一-鿿぀-ゟ゠-ヿ]+')
 KEYMSG_RE = re.compile(r'(임|음)\.\s*$')
 SOURCE_HINT = ['출처', 'source', 'sources', 'references', '참고문헌']
@@ -89,7 +127,7 @@ def headings_from_docx(path):
 
 
 def check_docx_headings(path, errors, warnings):
-    """v0.9.1: 챕터 헤딩 번호 체계(1. / 1.1) 검사 — H1C/H2C 드리프트 게이트."""
+    """v0.9.1: 챕터 헤딩 번호 체계(1. / 1.1) 검사: H1C/H2C 드리프트 게이트."""
     heads = headings_from_docx(path)
     h1_nums, cur_h1 = [], None
     for style, txt in heads:
@@ -104,7 +142,7 @@ def check_docx_headings(path, errors, warnings):
                 if not exempt:
                     errors.append({'type': 'HEADNUM', 'loc': 'H1:%s' % txt[:30],
                                    'detail': '챕터 H1 번호 없음',
-                                   'fix': "H1C() 헬퍼 사용 — '1. %s' 형태로 자동 번호" % txt[:20]})
+                                   'fix': "H1C() 헬퍼 사용: '1. %s' 형태로 자동 번호" % txt[:20]})
         else:  # Heading2
             m = H2_NUM_RE.match(txt)
             if m:
@@ -112,11 +150,11 @@ def check_docx_headings(path, errors, warnings):
                     errors.append({'type': 'HEADNUM', 'loc': 'H2:%s' % txt[:30],
                                    'detail': '소제목 번호 %s.%s 가 챕터 %s 와 불일치'
                                              % (m.group(1), m.group(2), cur_h1),
-                                   'fix': 'H2C() 헬퍼 사용 — 챕터 카운터와 자동 동기화'})
+                                   'fix': 'H2C() 헬퍼 사용: 챕터 카운터와 자동 동기화'})
             elif cur_h1 is not None and not exempt:
                 errors.append({'type': 'HEADNUM', 'loc': 'H2:%s' % txt[:30],
                                'detail': '소제목 H2 번호(%d.x) 없음' % cur_h1,
-                               'fix': "H2C() 헬퍼 사용 — '%d.1 %s' 형태" % (cur_h1, txt[:20])})
+                               'fix': "H2C() 헬퍼 사용: '%d.1 %s' 형태" % (cur_h1, txt[:20])})
     if len(heads) >= 4 and not h1_nums:
         errors.append({'type': 'HEADNUM', 'loc': 'docx', 'detail': '번호 달린 챕터 H1 이 0개',
                        'fix': '본문 챕터 전부 H1C()/H2C() 로 작성 (build 템플릿 헬퍼)'})
@@ -149,13 +187,34 @@ def check_texts(loc, texts, lang, errors, warnings, kind):
         n = joined.count(w) if lang == 'kr' else low.count(w.lower())
         if n:
             warnings.append({'type': 'HYPE_SOFT', 'loc': loc, 'detail': '%s x%d' % (w, n),
-                             'fix': '"%s" %d회 — 필요한 곳만 남기고 축소' % (w, n)})
+                             'fix': '"%s" %d회: 필요한 곳만 남기고 축소' % (w, n)})
 
     if kind == 'docx':
         for ch in BULLET_CHARS:
             if ch in joined:
                 errors.append({'type': 'BULLET', 'loc': loc, 'detail': ch,
                                'fix': 'Word 본문 bullet "%s" 제거 -> 산문 3~4 단락' % ch})
+
+    # v1.0 : 줄표, AI 티 문형, 장 사이 가리킴, 팀 금지 표현
+    n_dash = sum(joined.count(ch) for ch in DASH_CHARS)
+    if n_dash:
+        item = {'type': 'DASH', 'loc': loc, 'detail': '줄표(U+2014) x%d' % n_dash,
+                'fix': '줄표 대신 콜론, 쉼표, 괄호로 바꿈'}
+        (errors if DASH_LEVEL.get(lang, 'warn') == 'error' else warnings).append(item)
+    for w in AI_TONE.get(lang, []):
+        n = joined.count(w) if lang == 'kr' else low.count(w.lower())
+        if n:
+            warnings.append({'type': 'AI_TONE', 'loc': loc, 'detail': '"%s" x%d' % (w, n),
+                             'fix': '"%s" 를 빼고 내용으로 바로 말함' % w})
+    for w in POINTER.get(lang, []):
+        n = joined.count(w) if lang == 'kr' else low.count(w.lower())
+        if n:
+            warnings.append({'type': 'POINTER', 'loc': loc, 'detail': '"%s" x%d' % (w, n),
+                             'fix': '장 사이 예고·안내를 빼고 각 장을 자기 결론으로 끝냄'})
+    for w in BANNED.get(lang, []):
+        if (w in joined) or (lang == 'en' and w.lower() in low):
+            errors.append({'type': 'BANNED', 'loc': loc, 'detail': w,
+                           'fix': 'lexicon.json user_banned 표현 "%s" 를 바꿈' % w})
 
     if lang == 'kr':
         for t in texts:

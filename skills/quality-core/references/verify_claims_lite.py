@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""verify_claims_lite.py — MD/텍스트용 경량 claims 대조 게이트 (quality-core v0.1)
+"""verify_claims_lite.py: MD/텍스트용 경량 claims 대조 게이트 (quality-core v0.1)
 
 원본 파이프라인의 verify_claims.py(DOCX/PPTX용)를 일반 텍스트·마크다운에 맞게
 경량화한 것. 휴리스틱 기반이므로 최종 판단은 리포트를 읽고 사람이 내린다.
@@ -82,7 +82,7 @@ def main():
             registered.add(tok.replace(",", ""))
             registered.add(tok)
 
-    # 1) NUM_UNREG — 본문 유의미 수치가 원장에 없음
+    # 1) NUM_UNREG: 본문 유의미 수치가 원장에 없음
     for tok, pos in significant_numbers(body):
         if tok not in registered and tok.replace(",", "") not in registered:
             snippet = body[max(0, pos - 22): pos + 26].replace("\n", " ")
@@ -99,7 +99,7 @@ def main():
             if leaked or (key and key in body):
                 errors.append(f"[E] REMOVED_LEAK  {cid} removed claim이 본문에 잔존: {c.get('text','')[:40]}")
 
-        # 3) EST_UNMARKED — estimate 수치 주변 60자 내 추정 표기 확인
+        # 3) EST_UNMARKED: estimate 수치 주변 60자 내 추정 표기 확인
         if st == "estimate" and variants:
             for v in variants:
                 for m in re.finditer(re.escape(v), body):

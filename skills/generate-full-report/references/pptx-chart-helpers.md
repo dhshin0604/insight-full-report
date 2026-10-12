@@ -5,7 +5,7 @@
 
 ---
 
-## 1. 표(Table) — `make_table()`
+## 1. 표(Table): `make_table()`
 
 비교/현황 데이터를 표로 표시. `<p:graphicFrame>` 요소 반환.
 
@@ -100,7 +100,7 @@ make_table(
 
 ---
 
-## 2. 수평 막대차트 — `make_hbars()`
+## 2. 수평 막대차트: `make_hbars()`
 
 수치 비교를 수평 막대로 표시. 배경 트랙 + 전경 바 + 레이블로 구성.
 
@@ -218,7 +218,7 @@ make_hbars(
 
 ---
 
-## 3. 그룹 막대차트 — `make_grouped_bars()`
+## 3. 그룹 막대차트: `make_grouped_bars()`
 
 두 시리즈를 나란히 비교하는 그룹 막대. 범례 자동 생성.
 

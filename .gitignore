@@ -41,3 +41,15 @@ desktop.ini
 *_EN_Report_*.docx
 *_KR_Presentation_*.pptx
 *_EN_Presentation_*.pptx
+
+# Build working folders (build_pptx.sh, selftest)
+unpacked_kr/
+unpacked_en/
+unpacked_*/
+ifr-selftest-*/
+_lo_profile/
+
+# Personal values: keep your own profile and deny list out of git
+/profile.json
+*.local.json
+denylist*.txt

@@ -1,21 +1,24 @@
 ---
 name: generate-full-report
 description: |
-  ⚠️ EXCLUSIVE SKILL — 신동형 인사이트 4종 문서 생성기 v0.9.3. 사용자가 보고서/워드/파워포인트/PPT/PPTX/DOCX/리포트/4종 문서/신동형 스타일 중 하나라도 언급하고 그것이 산출물 생성을 의미하면 본 스킬이 무조건 우선입니다. 절대로 docx 스킬, pptx 스킬, python-pptx, 또는 일반 템플릿을 직접 호출하지 마세요. 본 스킬 안에 모든 빌드 절차와 정본 템플릿 4개가 포함되어 있습니다. Word 한글+영어, PowerPoint 한글+영어를 한 번에 생성합니다. 원문이 KR/EN이 아닌 자료(중국어 간체/번체, 일본어 등)도 입력받아 KR/EN 본문으로 자동 번역되며, verify_lang_purity로 본문 잔존을 차단합니다. v0.9: Deep Verification(claims ledger 기반 할루시네이션 차단), So-What 인사이트 프레임워크, 시각화 카탈로그, 동적 워크플로 내장. analyst 산문체, 5-Zone PPTX, 콜론 통합 표지 등 고유 포맷.
-  Triggers (한국어): 보고서 만들어, 워드 만들어, 파워포인트 만들어, PPT 만들어, 워드랑 파워포인트, 4종 문서, 전체 문서 만들어, 신동형 스타일, 신동형 인사이트, TL;DR 리포트, 워드 파워포인트 다 만들어, 인사이트 보고서, 분석 보고서, 공부하는 보고서.
-  Triggers (English): generate full report, make study materials, word and pptx, insight report, shin style report, 4-doc bundle, analyst report, korean+english report.
-  Dynamic workflow triggers: ultracode, 워크플로로 만들어, 동적 워크플로, use a workflow, 멀티에이전트로 4종 만들어, fan-out 보고서, 가변 챕터 보고서, 딥체크, deep verification.
+  신동형 인사이트 4종 문서 생성기 v1.0. 소스(URL, PDF, 영상, 텍스트)를 받아 Word 한글·영문과 글자를 고칠 수 있는 PowerPoint 한글·영문을 정본 템플릿으로 한 번에 만들고, TOC·내용 규칙·수치-출처(Claims Ledger)·16점 judge 의 4중 게이트로 검증함. 중국어·일본어 소스는 한/영으로 정규화함. 여러 에이전트가 조사하고 MD 토의본 확인을 거치는 큰 보고서는 report-harness, 이미지 슬라이드 덱(PNG·PDF)만 필요하면 image-deck 을 씀.
+  Triggers (한국어): 보고서 만들어, 워드랑 파워포인트, 4종 문서, 전체 문서 만들어, 신동형 스타일, 인사이트 보고서, 분석 보고서, 워크플로로 만들어, 딥체크 보고서.
+  Triggers (English): generate full report, word and pptx, 4-doc bundle, insight report, analyst report, ultracode, deep-verified report.
 ---
 
-# 인사이트 전체 보고서 생성 스킬 v0.9.3 — Unified Deep-Verify Edition
+# 인사이트 전체 보고서 생성 스킬 v1.0 (Unified Deep-Verify Edition)
 
-> **단일 진실의 원천(Single Source of Truth).** Word 한글, Word 영어, PowerPoint 한글, PowerPoint 영어 — 4개 문서를 신동형 인사이트 고유 포맷으로 생성합니다. 빌드 단계는 오케스트레이터(`build_pptx.sh`)로 외부화되어 어느 모델에서 실행해도 동일한 결과가 나오고, `verify_lang_purity.py` 가 KR/EN 본문의 언어 순수성을, **`verify_claims.py` + Claims Ledger 가 모든 수치·사실의 출처 정합(할루시네이션 차단)** 을 강제합니다. v0.9는 v0.6(언어 순수성)과 v0.7/0.8(동적 워크플로)을 단일 정본으로 통합했습니다.
+> **단일 진실의 원천(Single Source of Truth).** Word 한글, Word 영어, PowerPoint 한글, PowerPoint 영어: 4개 문서를 신동형 인사이트 고유 포맷으로 생성합니다. 빌드 단계는 오케스트레이터(`build_pptx.sh`)로 외부화되어 어느 모델에서 실행해도 동일한 결과가 나오고, `verify_lang_purity.py` 가 KR/EN 본문의 언어 순수성을, **`verify_claims.py` + Claims Ledger 가 모든 수치·사실의 출처 정합(할루시네이션 차단)** 을 강제합니다. v0.9는 v0.6(언어 순수성)과 v0.7/0.8(동적 워크플로)을 단일 정본으로 통합했습니다.
+
+> **v1.0 변경** : ① PPTX 빌드가 외부 pptx 스킬 없이 같은 폴더의 `ooxml_tools.py`(표준 라이브러리)로 돌아감 ② Phase 0 저장 위치를 실행 환경(Claude Code, Claude 앱, Cowork)별로 나눔 ③ 금지어 사전 `lexicon.json` 과 줄표(DASH)·AI 티 문형·장 사이 가리킴 검사를 `verify_content.py` 에 추가 ④ 정본 템플릿 4개의 예시 원고가 자기 게이트를 통과하도록 정리 ⑤ Word 템플릿의 출력 경로·표지 그림 경로를 인자와 환경변수로 받음
 >
-> **v0.9.3 (pptx 스킬 호환 패치)** : Anthropic `pptx` 스킬 2026-10 판이 `scripts/office/unpack.py`·`pack.py` 를 제거하고 `add_slide.py` 가 `<p:sldIdLst>` 등록까지 맡게 되어 기존 오케스트레이터가 unpack 단계에서 멈추던 문제를 고쳤습니다. `build_pptx.sh` 가 unpack/pack 을 내장(zipfile)하고, sldIdLst 보정을 rels 기준 정합(중복·고아 제거, 빠진 슬라이드만 추가)으로 바꿨으며, pptx 스킬 경로를 `/mnt/skills/public/pptx` → `~/.claude/skills/synced/*/pptx` → `/sessions/*` 순으로 찾고, pack 뒤 `validate.py --original` 검증을 붙였습니다. 구판 pptx 스킬(unpack.py/pack.py 보유)에서도 그대로 동작합니다.
+> **다른 스킬과의 경계** : 이미지 슬라이드 덱(PNG, PDF)만 필요하면 `image-deck`, 여러 에이전트가 조사·집필하고 MD 토의본을 사용자가 확인한 뒤 Word·덱을 내는 큰 보고서는 `report-harness`, 이미 있는 초안의 검증만 필요하면 `quality-core` 를 씀
+>
+> **경로** : 이 문서의 `references/…` 는 스킬 폴더 `${CLAUDE_SKILL_DIR}` 기준임(Claude Code, Cowork 는 이 표기를 실제 경로로 바꿔 보여 줌. 그대로 보이면 이 SKILL.md 가 있는 폴더). 작업 폴더에서 명령을 실행할 때는 먼저 `REF="${CLAUDE_SKILL_DIR}/references"` 로 잡고 명령의 `references/` 를 `$REF/` 로 바꿔 씀
 
 ---
 
-## 🚨 GATE 0 — 즉시 중단 체크
+## 🚨 GATE 0: 즉시 중단 체크
 
 이 스킬이 로드되었다면 다음 중 하나라도 해당하면 **STOP** 후 본 SKILL.md를 처음부터 다시 읽기:
 
@@ -25,14 +28,14 @@ description: |
 4. 필수 reference `.md` 파일을 한 개도 안 읽었다 → STOP. 아래 GATE 1을 먼저 수행.
 5. PPTX를 만들면서 `build_pptx.sh` 오케스트레이터를 우회했다 → STOP. 오케스트레이터가 unpack/sldIdLst/strip/pack/verify 를 모두 처리한다.
 6. 표지에 PB() 페이지브레이크 또는 Source 라인을 넣으려고 했다 → STOP. 표지+차트는 동일 페이지.
-7. Phase 0 를 건너뛰고 `/sessions/*/mnt/outputs` 같은 임시 경로에 최종 산출물을 저장하려 했다 → STOP. 반드시 Phase 0 의 사용자 영구 폴더(`$WORKSPACE`)로 저장.
-8. `present_files` 를 `$WORKSPACE` 바깥 경로(cwd, tmp, outputs 등)로 호출하려 했다 → STOP. mount 바깥 경로는 자동으로 세션 outputs 로 복사되어 카드 링크가 **세션 종료 후 깨짐**. 반드시 Phase 7-B 의 안전 검증 통과 후 $WORKSPACE 하위 경로만 전달.
+7. Phase 0 를 건너뛰고 세션 임시 경로(Cowork 의 `/sessions/*/mnt/outputs`, 작업용 tmp 폴더 등)에만 최종 산출물을 두려 했다 → STOP. Phase 0 에서 환경에 맞는 저장 위치를 먼저 정함.
+8. (Cowork) `present_files` 를 `$WORKSPACE` 바깥 경로(cwd, tmp, outputs 등)로 호출하려 했다 → STOP. Cowork 에서 mount 바깥 경로는 세션 outputs 로 복사되어 카드 링크가 세션 종료 후 깨짐. Phase 7-B 의 환경별 전달 규칙을 따름.
 9. 소스 언어가 **한국어/영어가 아닌 경우**(중국어·일본어·기타) 원문 표기를 그대로 본문에 넣으려 했다 → STOP. **Phase 1.5 (다국어 소스 언어 정규화)** 를 먼저 수행한 뒤 Phase 2 로 진입.
 10. **소스에서 확인하지 않은 수치·날짜·사건·인용을 본문에 쓰려고 했다** → STOP. 모든 사실 주장은 Phase 2.7 의 Claims Ledger(`claims.json`)에 등록·검증되어야 한다 (`references/factcheck-pipeline.md`). 기억(사전지식)에서 꺼낸 수치는 웹으로 재확인 전까지 사용 금지.
 
 ---
 
-## 🛑 GATE 1 — 작업 시작 전 필수 (MANDATORY READS)
+## 🛑 GATE 1: 작업 시작 전 필수 (MANDATORY READS)
 
 이 스킬이 트리거되면 **첫 번째 행동은 반드시** 아래 7개 reference 파일을 `Read` 툴로 모두 읽는 것입니다.
 
@@ -42,11 +45,11 @@ description: |
 3. references/pptx-style-guide.md        ← 5-Zone 레이아웃 좌표·색상
 4. references/pptx-chart-helpers.md      ← make_table / make_hbars 등 시각화 함수
 5. references/docx-chart-design.md       ← 표지 플로우차트 SVG 설계
-6. references/factcheck-pipeline.md      ← Deep Verification — Claims Ledger·검증 규칙 (v0.9)
+6. references/factcheck-pipeline.md      ← Deep Verification: Claims Ledger·검증 규칙 (v0.9)
 7. references/insight-frameworks.md      ← So-What 사다리·반론 내성·수치 비교축 (v0.9)
 ```
 
-권장 추가 읽기: `references/visual-catalog.md` (본문 시각화 카탈로그 — 권장 가이드),
+권장 추가 읽기: `references/visual-catalog.md` (본문 시각화 카탈로그: 권장 가이드),
 `references/verify_lang_purity.py` (비 한/영 소스일 때 통독 권장).
 
 그리고 build 단계 진입 직전 아래 **canonical template** 4개도 읽어 그대로 적응(adapt)해야 합니다.
@@ -58,7 +61,7 @@ references/build_pptx_kr.template.py     ← PPTX 한글 정본 (slide5 closing 
 references/build_pptx_en.template.py     ← PPTX 영어 정본 (slide5 closing 포함)
 ```
 
-### GATE 1 셀프 체크 — 6문 6답 통과 필수
+### GATE 1 셀프 체크: 6문 6답 통과 필수
 
 ```
 Q1. PPTX의 모든 Zone helper 함수에서 <p:nvPr> 태그는?
@@ -79,7 +82,7 @@ Q6. 본문에 수치를 쓰기 위한 전제 조건은?
 
 ---
 
-## 🚫 ANTI-DRIFT — 절대 금지 사항
+## 🚫 ANTI-DRIFT: 절대 금지 사항
 
 | ❌ 금지 | ✅ 대신 |
 |---|---|
@@ -98,7 +101,7 @@ Q6. 본문에 수치를 쓰기 위한 전제 조건은?
 | 한국어 인용부호 `'단어'` 그대로 | `「단어」` 로 변환 |
 | 영어본 전화번호 다른 형식 | 국제 표기 `{PHONE_EN}` (예: +82-10-0000-0000, profile.json 값) |
 | 한국어 차트에 NanumGothic 외 폰트 | NanumGothic 필수, 영어는 Arial/DejaVu Sans |
-| 산출물을 `/sessions/$USER_SESSION/mnt/outputs` 로 저장 | Phase 0 의 `$WORKSPACE` (사용자 OneDrive 영구 폴더) 로 저장 |
+| 산출물을 세션 임시 경로에만 저장 | Phase 0 에서 정한 `$WORKSPACE` 에 저장 (환경별 표 참조) |
 | Phase 0 를 생략 | Phase 0 는 **필수**. 저장 경로를 먼저 확정한 뒤 빌드 시작 |
 | 중국어/일본어 원문을 그대로 본문에 복사·붙여넣기 | 반드시 한글(한글문서) 또는 영어(영문문서)로 **전면 번역** 후 사용 |
 | 한글 본문에 한자(漢字/中文) 혼입 | 한글 본문은 100% 한글. 고유명사·핵심기술용어는 **첫 등장시에만** `한글(中文)` 형식, 이후 한글 전용 |
@@ -110,9 +113,9 @@ Q6. 본문에 수치를 쓰기 위한 전제 조건은?
 | **소스에 없는 수치를 그럴듯하게 생성** | 수치 없이 서술하거나 estimate 등록 + 본문 `추정` 표기 + 산출 근거 |
 | **비교축 없는 절대값 수치 나열** | YoY/경쟁사/시장평균 중 1개 비교축 동반 (insight-frameworks.md §2) |
 | **사실과 해석(의견)을 같은 문형으로 단정** | 해석·전망은 "~로 해석됨/~할 가능성이 큼" 으로 의견임을 명시 |
-| KEY MESSAGE 를 사실 나열(L1)로 작성 | So-What 사다리 L2 이상 — 의미·함의가 담긴 통찰 명제 |
+| KEY MESSAGE 를 사실 나열(L1)로 작성 | So-What 사다리 L2 이상: 의미·함의가 담긴 통찰 명제 |
 | 프로세스·구조 설명을 줄글로만 길게 서술 | visual-catalog.md 매핑에 따라 플로우차트/표/차트 활용 (권장) |
-| **Word 챕터 헤딩에 번호 누락** (`제목`만) 또는 텍스트에 수동 번호 기입 | `H1C()`/`H2C()` 헬퍼 사용 — `1. 제목`/`1.1 소제목` 자동 번호. `verify_content.py` HEADNUM 게이트가 강제 (v0.9.1) |
+| **Word 챕터 헤딩에 번호 누락** (`제목`만) 또는 텍스트에 수동 번호 기입 | `H1C()`/`H2C()` 헬퍼 사용: `1. 제목`/`1.1 소제목` 자동 번호. `verify_content.py` HEADNUM 게이트가 강제 (v0.9.1) |
 
 ---
 
@@ -124,12 +127,12 @@ Q6. 본문에 수치를 쓰기 위한 전제 조건은?
 3. **작성자·연락처(프로필)**: `references/profile.json` 의 AUTHOR_KR / AUTHOR_EN / PHONE_KR / PHONE_EN / EMAIL. 비어 있으면 여기서 함께 질문 → 작업 폴더 `./profile.json` 에 기록 (아래 **PROFILE** 절)
 4. **주제 슬러그(폴더/파일명용)**: 한글/영문 혼용 가능, 공백은 언더스코어(`_`)로. 예: `AI에이전트`, `반도체_2026`
 
-> 세션 임시 outputs는 사라지므로 반드시 **사용자의 영구 폴더**로 저장해야 합니다. 아래 Phase 0 를 건너뛰지 마세요.
-> Deep Verification(Phase 2.7)은 v0.9의 **기본값**입니다 — 별도 질문 없이 항상 수행합니다.
+> 세션 임시 폴더는 세션이 끝나면 사라질 수 있으므로 산출물은 사용자가 다시 열 수 있는 곳에 둠. 아래 Phase 0 를 건너뛰지 않음.
+> Deep Verification(Phase 2.7)은 v0.9의 **기본값**입니다. 별도 질문 없이 항상 수행합니다.
 
 ---
 
-## 👤 PROFILE — 작성자·연락처·저장 경로 (필수)
+## 👤 PROFILE: 작성자·연락처·저장 경로 (필수)
 
 이 저장소에는 특정인의 이름·전화·이메일·저장 경로가 하드코딩되어 있지 않습니다. 정본 템플릿(Word 표지 작성자 줄, PPTX 표지·맺음말)과 `TEMPLATE.pptx` 의 모든 레이아웃 하단 크레딧 줄에 아래 플레이스홀더가 들어 있고, `references/profile.json` 의 값으로 치환됩니다.
 
@@ -140,82 +143,64 @@ Q6. 본문에 수치를 쓰기 위한 전제 조건은?
 | `PHONE_KR` | KR PPTX 맺음말 | 010-0000-0000 |
 | `PHONE_EN` | EN PPTX 맺음말 (국제 표기) | +82-10-0000-0000 |
 | `EMAIL` | KR/EN PPTX 맺음말, 모든 슬라이드 하단 크레딧 | name@example.com |
-| `WORKSPACE_ROOT` | Phase 0 영구 저장 루트 (Windows 경로) | C:\Users\<계정>\OneDrive\인사이트보고서 |
+| `WORKSPACE_ROOT` | Phase 0 저장 루트(Claude Code 에서 씀, 비우면 작업 폴더) | C:\Users\<계정>\Documents\Reports |
 | `WORKSPACE_DIRNAME` | Phase 0 mount 탐색용 폴더명 | 인사이트보고서 |
 
 ### 규칙
-1. **프로필 파일은 자동 선택된다** — `PROFILE` 환경변수 > 작업 폴더의 `./profile.json` > `references/profile.json` 순서로, 필수 5개 키가 모두 찬 파일을 고른다. 어느 파일이 쓰이는지는 `python3 references/apply_profile.py --which` 로 확인한다.
+1. **프로필 파일은 자동 선택된다**: `PROFILE` 환경변수 > 작업 폴더의 `./profile.json` > `references/profile.json` 순서로, 필수 5개 키가 모두 찬 파일을 고른다. 어느 파일이 쓰이는지는 `python3 references/apply_profile.py --which` 로 확인한다.
 2. `references/profile.json` 에 값이 이미 모두 있으면 → 그대로 사용하고 **다시 묻지 않는다**.
 3. 비어 있으면 → 사전 확인(AskUserQuestion)에서 이름·연락처를 함께 묻고, **작업 폴더에 `./profile.json` 을 만들어 기록한다**(스킬 폴더는 읽기 전용일 수 있음). 별도 환경변수 없이 이후 빌드가 자동으로 이 파일을 집는다.
 4. Word: `cp` 직후 `python3 references/apply_profile.py build_kr.js build_en.js`. 치환 없이 실행하면 스크립트 상단 PROFILE GUARD 가 exit 2 로 중단한다.
 5. PPTX: `build_pptx.sh` 가 슬라이드 작성 직후 `unpacked_<lang>/ppt` 전체(슬라이드 + 레이아웃 크레딧)에 자동 적용한다. 따로 붙일 인자가 없다.
 6. 로고: 표지 레이아웃의 이미지는 빈(투명) 이미지다. `references/logo.png`(권장 315×60px, 투명 배경)를 두거나 `LOGO=경로` 환경변수를 주면 빌드 시 자동 교체된다.
-7. 플레이스홀더 원문이 산출물에 남으면 안 된다 — `apply_profile.py` 와 `build_pptx.sh` 가 잔존 시 빌드를 중단하고, 무엇이 비었는지와 해결책을 출력한다.
+7. 플레이스홀더 원문이 산출물에 남으면 안 된다: `apply_profile.py` 와 `build_pptx.sh` 가 잔존 시 빌드를 중단하고, 무엇이 비었는지와 해결책을 출력한다.
 
 ---
 
-## Phase 0: 출력 폴더 준비 (영구 저장 경로 확정) — **필수**
+## Phase 0: 저장 위치 확정 (필수)
 
-> **Why this phase exists**: 예전 버전은 `/sessions/$USER_SESSION/mnt/outputs` 로 저장했는데 이 경로는 세션 종료와 함께 삭제되고, Windows 탐색기에서 열면 "위치를 사용할 수 없습니다" 오류가 발생합니다. 이제부터는 **사용자의 OneDrive 영구 폴더**에 직접 저장합니다.
+> 이유 : 세션 임시 폴더는 세션이 끝나면 사라질 수 있음. 산출물은 사용자가 다시 열 수 있는 곳에 둬야 하고, 그 방법은 실행 환경마다 다름.
 
-### 저장 경로 규칙 (profile.json 의 WORKSPACE_ROOT / WORKSPACE_DIRNAME)
+### 환경별 저장 위치
 
-```
-루트    : {WORKSPACE_ROOT}\                        ← 예: C:\Users\<계정>\OneDrive\인사이트보고서\
-하위폴더 : {주제}_{YYYYMMDD}\
-최종    : {WORKSPACE_ROOT}\{주제}_{YYYYMMDD}\
-          ├─ {주제}_KR_Report_{YYYYMMDD}.docx
-          ├─ {주제}_EN_Report_{YYYYMMDD}.docx
-          ├─ {주제}_KR_Presentation_{YYYYMMDD}.pptx
-          └─ {주제}_EN_Presentation_{YYYYMMDD}.pptx
-```
+| 환경 | 알아보는 법 | 저장 위치 `$WORKSPACE` | 전달 |
+|---|---|---|---|
+| Claude Code (사용자 컴퓨터) | 작업 폴더가 사용자 컴퓨터의 폴더임 | `profile.json` 의 `WORKSPACE_ROOT` 가 있으면 그 아래, 없으면 현재 작업 폴더 아래 `{주제}_{YYYYMMDD}/` | 저장 경로를 알려 줌 |
+| Claude 앱 (claude.ai 웹·데스크톱, 클라우드 작업 공간) | `/sessions` 가 없고 작업 공간이 클라우드에 있음 | 작업 공간 아래 `{주제}_{YYYYMMDD}/` | 파일 전달 도구로 4종을 보냄. 사용자 컴퓨터 폴더가 연결돼 있으면 거기에도 저장 |
+| Cowork | `/sessions/*/mnt` 가 있음 | 사용자가 연결한 영구 폴더(`WORKSPACE_DIRNAME`) 아래. 없으면 `request_cowork_directory` 로 연결을 요청 | 그 폴더 안의 파일만 `present_files` 로 전달 |
 
-### STEP 0-A — 루트 폴더 mount (한 번)
-
-`mcp__cowork__request_cowork_directory` 를 호출해 루트 폴더 `{WORKSPACE_ROOT}` 를 연결합니다.
-
-> 폴더가 아직 없으면 사용자에게 먼저 생성을 안내하거나, 상위 폴더(OneDrive 등)만 mount 한 뒤 `mkdir -p` 로 `{WORKSPACE_DIRNAME}` 하위를 만듭니다.
-
-### STEP 0-B — 마운트 경로 감지 (동적 탐색, `$USER_SESSION` 미의존)
+### STEP 0-A : 저장 위치 정하기
 
 ```bash
-WORKSPACE_DIRNAME="<profile.json 의 WORKSPACE_DIRNAME>"     # 예: 인사이트보고서
+TOPIC_SLUG="<사용자 지정 주제 슬러그>"     # 예: AI에이전트
+TODAY=$(date +%Y%m%d)
+PROFILE_JSON="$(python3 references/apply_profile.py --which)"
+WORKSPACE_ROOT="$(python3 -c "import json,sys; print(json.load(open(sys.argv[1], encoding='utf-8')).get('WORKSPACE_ROOT',''))" "$PROFILE_JSON")"
+WORKSPACE_DIRNAME="$(python3 -c "import json,sys; print(json.load(open(sys.argv[1], encoding='utf-8')).get('WORKSPACE_DIRNAME',''))" "$PROFILE_JSON")"
 
-# 세션 mnt 루트 자동 감지
-SESSION_MNT=$(ls -d /sessions/*/mnt 2>/dev/null | head -1)
-
-# 1순위: 사용자가 직접 mount한 WORKSPACE_DIRNAME 폴더
-DEST_ROOT=$(find "$SESSION_MNT" -maxdepth 3 -type d -name "$WORKSPACE_DIRNAME" 2>/dev/null | head -1)
-
-# 2순위: OneDrive 등 상위 폴더 하위
-[ -z "$DEST_ROOT" ] && DEST_ROOT=$(find "$SESSION_MNT" -maxdepth 4 -type d -path "*${WORKSPACE_DIRNAME}*" 2>/dev/null | head -1)
-
-# 3순위: fallback — 세션 outputs (경고 표시 후 사용, 영구 저장은 실패)
-if [ -z "$DEST_ROOT" ]; then
-  echo "⚠️  영구 폴더 mount 실패 — 세션 outputs 사용 (세션 종료 시 삭제됨!)"
-  DEST_ROOT="$SESSION_MNT/outputs"
+if ls -d /sessions/*/mnt >/dev/null 2>&1; then                     # Cowork
+  SESSION_MNT=$(ls -d /sessions/*/mnt | head -1)
+  DEST_ROOT=""
+  [ -n "$WORKSPACE_DIRNAME" ] && DEST_ROOT=$(find "$SESSION_MNT" -maxdepth 4 -type d -name "$WORKSPACE_DIRNAME" 2>/dev/null | head -1)
+elif [ -n "$WORKSPACE_ROOT" ] && [ -d "$WORKSPACE_ROOT" ]; then    # Claude Code + 프로필 경로
+  DEST_ROOT="$WORKSPACE_ROOT"
+else                                                               # Claude Code 기본, Claude 앱 작업 공간
+  DEST_ROOT="$(pwd)"
 fi
-echo "DEST_ROOT = $DEST_ROOT"
+if [ -z "$DEST_ROOT" ]; then
+  # 여기서 멈춤 : 빈 DEST_ROOT 로 진행하면 파일 시스템 맨 위(/)에 폴더를 만들게 됨
+  echo "STOP : 영구 폴더가 연결되지 않음. request_cowork_directory 로 폴더 연결을 요청한 뒤 이 블록을 다시 실행"
+else
+  WORKSPACE="$DEST_ROOT/${TOPIC_SLUG}_${TODAY}"
+  mkdir -p "$WORKSPACE" && echo "WORKSPACE = $WORKSPACE"
+fi
 ```
 
-### STEP 0-C — 주제 하위폴더 생성
+### STEP 0-B : 자기 점검
 
-```bash
-TOPIC_SLUG="<사용자 지정 주제 슬러그>"         # 예: AI에이전트
-TODAY=$(date +%Y%m%d)                           # 예: 20260610
-WORKSPACE="$DEST_ROOT/${TOPIC_SLUG}_${TODAY}"
-mkdir -p "$WORKSPACE"
-ls -la "$WORKSPACE"     # 존재 확인
-echo "WORKSPACE = $WORKSPACE"
-```
-
-> 이후 Phase 4/5 에서 만든 `.docx`/`.pptx` 를 이 `$WORKSPACE` 로 `cp` 합니다.
-
-### STEP 0-D — 자기 점검
-
-- [ ] `$WORKSPACE` 가 `/sessions/*/mnt/` 아래에 존재 (`ls -la "$WORKSPACE"` OK)
-- [ ] Windows 측 경로 `{WORKSPACE_ROOT}\{주제}_{YYYYMMDD}\` 에 해당
-- [ ] 세션 임시 경로(`/sessions/*/mnt/outputs`)는 최종 저장소로 사용하지 않음
+- [ ] `$WORKSPACE` 가 실제로 있음 (`ls -la "$WORKSPACE"`)
+- [ ] Cowork 라면 `$WORKSPACE` 가 `/sessions/*/mnt/outputs` 가 아니라 사용자가 연결한 폴더 아래임
+- [ ] Phase 4·5 의 산출물을 마지막에 `$WORKSPACE` 로 모음
 
 ---
 
@@ -228,11 +213,11 @@ echo "WORKSPACE = $WORKSPACE"
 
 수집 완료 후 소스 제목·저자·날짜·핵심 주제 정리. 이때 **소스 원문의 언어**도 기록 (예: `KR / EN / ZH(简体) / ZH(繁體) / JA / 혼합`).
 
-> 이 시점부터 Claims Ledger(`claims.json`) 작성을 시작합니다 — 소스에서 발견한 핵심 수치·사건을 바로 등록해 두면 Phase 2.7 검증이 빨라집니다 (`references/factcheck-pipeline.md` §1 스키마).
+> 이 시점부터 Claims Ledger(`claims.json`) 작성을 시작합니다. 소스에서 발견한 핵심 수치·사건을 바로 등록해 두면 Phase 2.7 검증이 빨라집니다 (`references/factcheck-pipeline.md` §1 스키마).
 
 ---
 
-## Phase 1.5: 다국어 소스 언어 정규화 (Multilingual Source Normalization) — 조건부 **필수**
+## Phase 1.5: 다국어 소스 언어 정규화 (Multilingual Source Normalization, 조건부 **필수**)
 
 > **Why this phase exists**: 중국어·일본어·기타 비(非) 한/영 원문 소스를 그대로 분석에 쓰면 최종 Word/PPTX 본문에 한자(漢字)·中文·가나 문자가 섞여 들어가 신동형 인사이트의 한글/영문 정본 포맷을 훼손합니다. 본 Phase 에서 **정규화된 노트(normalized notes)** 를 먼저 만든 뒤 Phase 2 로 넘어가야 합니다.
 
@@ -244,16 +229,16 @@ echo "WORKSPACE = $WORKSPACE"
 - 소스가 한/영이어도 **고유명사가 한자/中文으로만 표기**되어 있는 경우 (예: 中国电科, 比亚迪, 紫光)
 - 영상/음성 자막이 중국어/일본어로 제공되는 경우
 
-### STEP 1.5-A — 정규화 노트 생성
+### STEP 1.5-A: 정규화 노트 생성
 
 원문을 바로 Phase 2 구조에 넣지 말고, **중간 산출물**로 다음 두 세트를 만든다:
 
-1. `notes_kr.md` — 한국어 정규화 노트 (한글 문서 빌드용)
-2. `notes_en.md` — 영어 정규화 노트 (영문 문서 빌드용)
+1. `notes_kr.md`: 한국어 정규화 노트 (한글 문서 빌드용)
+2. `notes_en.md`: 영어 정규화 노트 (영문 문서 빌드용)
 
 각 노트는 **원문 1 문단 → 번역 1 문단** 구조로 작성하되, 최종 본문에는 번역본만 사용한다.
 
-### STEP 1.5-B — 한글 문서 언어 정책 (KR Docs)
+### STEP 1.5-B: 한글 문서 언어 정책 (KR Docs)
 
 본문 서술은 **100% 한글**. 한자·中文·가나 문자는 아래 한 가지 경우에만 허용:
 
@@ -261,13 +246,13 @@ echo "WORKSPACE = $WORKSPACE"
 |---|---|---|
 | 회사·제품·인물 고유명사 첫 등장 | `한글음차/번역(中文)` | `바이두(百度)`, `알리바바(阿里巴巴)`, `런정페이(任正非)` |
 | 번역 모호한 핵심 기술용어 첫 등장 | `한글(中文)` | `전목시(全目視, end-to-end visual)` |
-| 한시·고전 인용 (아주 드물게) | 인용 블록 내부에서만 원문+번역 | — |
+| 한시·고전 인용 (아주 드물게) | 인용 블록 내부에서만 원문+번역 | (예시 없음) |
 
 **이후 모든 재등장은 한글 전용**. 본문 어디에도 `百度`, `人工智能`, `中国` 같은 독립 한자/中文 토큰이 나타나서는 안 된다.
 
 > 주의: 괄호 병기는 **첫 등장 1회**에 한한다. TOC/챕터 라벨/KEY MESSAGE/z4 본문 어디에서도 규칙 동일.
 
-### STEP 1.5-C — 영문 문서 언어 정책 (EN Docs)
+### STEP 1.5-C: 영문 문서 언어 정책 (EN Docs)
 
 본문 서술은 **100% English**. 고유명사 첫 등장시에만 pinyin + 中文 병기:
 
@@ -280,7 +265,7 @@ echo "WORKSPACE = $WORKSPACE"
 
 > 일본어 소스의 경우: 한글 문서는 `한글(日本語)`, 영문 문서는 `English (Romaji, 日本語)` 형식으로 동일 규칙 적용.
 
-### STEP 1.5-D — 용어 사전(glossary) 고정
+### STEP 1.5-D: 용어 사전(glossary) 고정
 
 정규화 노트 상단에 **용어 사전**을 먼저 만든다 (이후 모든 챕터가 이 사전을 참조):
 
@@ -297,12 +282,13 @@ echo "WORKSPACE = $WORKSPACE"
 
 Phase 2 이후의 모든 본문 작성은 이 사전의 **재등장 열(column)** 만 사용한다. 첫 등장 열은 각 문서에서 해당 용어가 처음 나오는 지점에만 한 번 쓰고, 같은 문서에서 재등장하면 재등장 열을 쓴다.
 
-### STEP 1.5-E — 자기 점검
+### STEP 1.5-E: 자기 점검
 
 - [ ] `notes_kr.md` / `notes_en.md` 두 노트에 원문 1 문단당 번역 1 문단이 매핑되어 있다
 - [ ] Glossary 가 정규화 노트 상단에 생성되어 있다
 - [ ] Phase 2 이후의 모든 본문 초안이 번역본+Glossary 재등장열만 참조한다 (원문 복붙 0 건)
-- [ ] 본문 작성 후 `grep -Pc '[\x{4E00}-\x{9FFF}\x{3040}-\x{309F}\x{30A0}-\x{30FF}]' notes_kr.md` 결과가 **Glossary + 첫등장 괄호 병기 부분의 예상치와 일치** (그 외 한자/가나 0건)
+- [ ] 본문 작성 후 한자·가나가 든 줄 수가 **Glossary + 첫등장 괄호 병기 부분의 예상치와 일치** (그 외 한자/가나 0건). OS 와 무관하게 세는 법 :
+  `python3 -c "import re,sys; print(sum(1 for l in open(sys.argv[1], encoding='utf-8') if re.search('[\u4e00-\u9fff\u3040-\u30ff]', l)))" notes_kr.md`
 
 > 검증 팁: Phase 6 품질 검증에서 `verify_lang_purity.py` 가 4개 산출물에 대해 독립 한자/가나 토큰을 재확인한다.
 
@@ -312,10 +298,10 @@ Phase 2 이후의 모든 본문 작성은 이 사전의 **재등장 열(column)*
 
 ### Executive Summary 4파트 (이 구조 외 금지)
 ```
-■ Key Message   — 1~2문장 핵심 명제 (So-What 사다리 L3~L4)
-■ 배경          — 거시 맥락 + 수치 (비교축 동반)
-■ 핵심 구조 흐름 — ① ② ③ ④ Bold + 내러티브
-■ 전망          — 단기/중기/장기 (조건문 + estimate 표기)
+■ Key Message  : 1~2문장 핵심 명제 (So-What 사다리 L3~L4)
+■ 배경         : 거시 맥락 + 수치 (비교축 동반)
+■ 핵심 구조 흐름: ① ② ③ ④ Bold + 내러티브
+■ 전망         : 단기/중기/장기 (조건문 + estimate 표기)
 ```
 
 ### 챕터 구성 (TOC와 본문 z1 라벨이 1:1로 일치해야 함)
@@ -329,17 +315,17 @@ VI : 미래 전망
 VII: Devil's Advocate (비판적 관점)
 ```
 
-> 기본은 7챕터 정본. **동적 워크플로(Phase D)에서는 소스 깊이에 따라 5~9개로 가변** — 단, TOC ↔ 본문 1:1 일치 규칙은 그대로 강제됩니다 (`verify_toc.py`).
+> 기본은 7챕터 정본. **동적 워크플로(Phase D)에서는 소스 깊이에 따라 5~9개로 가변**: 단, TOC ↔ 본문 1:1 일치 규칙은 그대로 강제됩니다 (`verify_toc.py`).
 
-### 각 챕터 내용 (insight-frameworks.md 적용 — v0.9 강화)
+### 각 챕터 내용 (insight-frameworks.md 적용, v0.9 강화)
 - 소주제 H2 2~3개/챕터
-- 각 H2마다 KEY MESSAGE (완결 분석 문장 40~100자) — **So-What 사다리 L2 이상**에서 도출. 사실 나열(L1) 금지. 챕터당 최소 1개는 L3(2차 효과: 수혜/피해 주체) 도달
+- 각 H2마다 KEY MESSAGE (완결 분석 문장 40~100자): **So-What 사다리 L2 이상**에서 도출. 사실 나열(L1) 금지. 챕터당 최소 1개는 L3(2차 효과: 수혜/피해 주체) 도달
 - 내러티브 3~4 단락 (비유·수치·맥락 필수). 수치는 **비교축 동반**(YoY/경쟁사/시장평균)
 - 챕터 핵심 주장마다 **가장 강한 반론 1개**를 본문에서 처리 (반박 또는 조건부 인정)
 - 핵심 사건은 **이해관계자 3렌즈**(당사자/경쟁자/수요자) 함의 검토
 - 비교 데이터는 `makeTable()` / 프로세스·구조는 플로우차트 (visual-catalog.md 매핑)
 
-### 시각화 계획표 (권장 — visual-catalog.md)
+### 시각화 계획표 (권장: visual-catalog.md)
 
 구조화를 마치면 챕터별 시각요소 계획을 표로 만든다 (의무 게이트는 아니지만 강력 권장):
 
@@ -357,7 +343,7 @@ VII: Devil's Advocate (비판적 관점)
 
 ---
 
-## Phase 2.7: Deep Verification (할루시네이션 제거 게이트) — **필수, v0.9 신규**
+## Phase 2.7: Deep Verification (할루시네이션 제거 게이트, **필수**, v0.9 신규)
 
 > Anthropic 동적 워크플로 블로그의 **deep verification 패턴** 적용. 상세 절차는 `references/factcheck-pipeline.md`.
 
@@ -369,20 +355,18 @@ VII: Devil's Advocate (비판적 관점)
 3. **회의 패스**: "비평가 모자"를 쓰고 verified 판정 표본을 재확인 (동적 워크플로 모드에서는 별도 skeptic 에이전트).
 4. **기계 검증**: 빌드 후 Phase 6 에서 `verify_claims.py` 가 산출물 본문의 모든 유의미 수치가 ledger 와 정합하는지 검사. 실패 시 빌드 FAIL.
 
-> 사실과 해석의 분리: 분석·전망은 claim 이 아니라 의견 — "~로 해석됨", "~할 가능성이 큼" 으로 쓴다. 의견을 사실처럼 단정하지 않는다.
+> 사실과 해석의 분리: 분석·전망은 claim 이 아니라 의견이므로 「~로 해석됨」, 「~할 가능성이 큼」 으로 쓴다. 의견을 사실처럼 단정하지 않는다.
 
 ---
 
 ## Phase 3: 시각화 생성 (표지 차트 + 본문 시각요소)
 
-### NanumGothic 설치 (sandbox에서 GitHub raw 차단되므로 pip 패키지 사용)
+### NanumGothic 글꼴 (GitHub raw 가 막힌 환경에서도 되는 pip 패키지 사용, OS 무관)
 ```bash
-pip install --break-system-packages cairosvg koreanize-matplotlib 2>&1 | tail -2
-mkdir -p ~/.fonts
-NANUM=$(python3 -c "import koreanize_matplotlib, os; print(os.path.dirname(koreanize_matplotlib.__file__))")/fonts/NanumGothic.ttf
-cp "$NANUM" ~/.fonts/NanumGothic.ttf
-fc-cache -f ~/.fonts/ 2>/dev/null
-fc-list | grep -i nanum   # 확인
+python3 -m pip install koreanize-matplotlib Pillow   # 관리되는 Linux 환경이면 --break-system-packages 를 붙임
+python3 -c "import importlib.util, os; d = importlib.util.find_spec('koreanize_matplotlib').submodule_search_locations[0]; print(os.path.join(d, 'fonts'))"
+# 출력된 폴더에 NanumGothic.ttf(본문)와 NanumGothicBold.ttf(굵게)가 있음. Pillow 에는 이 경로를 그대로 넘김
+# (~/.fonts 복사와 fc-cache 는 필요 없음. 레시피는 references/visual-catalog.md 3절)
 ```
 
 ### 표지 차트 사양 (Pillow 권장)
@@ -393,7 +377,7 @@ fc-list | grep -i nanum   # 확인
   - SVG 텍스트의 `&` 문자는 반드시 `&amp;` 로 escape
 - 설계 규격: `references/docx-chart-design.md`
 
-### 본문 시각요소 (v0.9 확장 — 권장 가이드)
+### 본문 시각요소 (v0.9 확장, 권장 가이드)
 
 Phase 2 의 시각화 계획표에 따라 챕터별 시각요소를 생성한다. 유형별 매핑·Pillow 레시피(박스+화살표 helper)·팔레트(#1A3A6B 계열)·삽입 규격은 `references/visual-catalog.md`. 요약:
 - 프로세스·인과 → 플로우차트 / 비교 → 표 / 수량·점유율 → 가로 막대 / 연대기 → 타임라인 / 포지셔닝 → 2×2
@@ -415,21 +399,23 @@ h = int(630 * img.size[1] / img.size[0])
 ## Phase 4: Word 문서 생성 (KR + EN)
 
 ```bash
-NODE_PATH=/usr/local/lib/node_modules_global/lib/node_modules node -e "require('docx'); console.log('docx OK')"
+export NODE_PATH="$(npm root -g)"          # 전역 npm 모듈 위치 (docx 가 없으면 : npm install -g docx)
+node -e "require('docx'); console.log('docx OK')"
 
 # 1. 정본 템플릿 복사
 cp references/build_kr.template.js build_kr.js
 cp references/build_en.template.js build_en.js
 
-# 1.5 프로필 치환 (표지 작성자 줄) — 프로필 파일은 자동 선택(PROFILE > ./profile.json > references/profile.json)
+# 1.5 프로필 치환 (표지 작성자 줄): 프로필 파일은 자동 선택(PROFILE > ./profile.json > references/profile.json)
 #     값이 비어 남으면 exit 2, 미치환 실행 시 build_*.js 상단 PROFILE GUARD 가 중단
 python3 references/apply_profile.py build_kr.js build_en.js
 
-# 2. 내용 치환 (제목, 본문, 챕터 등) — 헬퍼 시그니처는 변경 금지
+# 2. 내용 치환 (제목, 본문, 챕터 등): 헬퍼 시그니처는 변경 금지
 
 # 3. 문법 체크 후 실행
-node --check build_kr.js && NODE_PATH=/usr/local/lib/node_modules_global/lib/node_modules node build_kr.js
-node --check build_en.js && NODE_PATH=/usr/local/lib/node_modules_global/lib/node_modules node build_en.js
+#    표지 그림은 Phase 3 의 workflow_chart_{kr,en}_cropped.png (같은 폴더) 또는 COVER_IMG=경로
+node --check build_kr.js && node build_kr.js "$WORKSPACE/{주제}_KR_Report_{YYYYMMDD}.docx"
+node --check build_en.js && node build_en.js "$WORKSPACE/{주제}_EN_Report_{YYYYMMDD}.docx"
 ```
 
 ### 파일명
@@ -448,9 +434,9 @@ node --check build_en.js && NODE_PATH=/usr/local/lib/node_modules_global/lib/nod
 
 ---
 
-## Phase 5: PowerPoint 생성 (KR + EN) — 오케스트레이터 사용
+## Phase 5: PowerPoint 생성 (KR + EN, 오케스트레이터 사용)
 
-### STEP 1 — 정본 템플릿 복사 + 내용 치환
+### STEP 1: 정본 템플릿 복사 + 내용 치환
 
 ```bash
 cp references/build_pptx_kr.template.py build_pptx_kr.py
@@ -459,7 +445,7 @@ cp references/build_pptx_en.template.py build_pptx_en.py
 # ★ 주의: TOC(toc_items) 와 z1 좌측 라벨의 로마숫자 챕터가 1:1로 일치하도록!
 ```
 
-### STEP 2 — 오케스트레이터 한 줄 실행 (KR/EN 각각)
+### STEP 2: 오케스트레이터 한 줄 실행 (KR/EN 각각)
 
 ```bash
 bash references/build_pptx.sh kr build_pptx_kr.py {주제}_KR_Presentation_{YYYYMMDD}.pptx
@@ -474,34 +460,31 @@ bash references/build_pptx.sh en build_pptx_en.py {주제}_EN_Presentation_{YYYY
 
 | # | 단계 | 내용 |
 |---|---|---|
-| 1 | clean unpack | `unpacked_{lang}/` 디렉터리에 TEMPLATE.pptx 풀기 (pptx 스킬에 `unpack.py` 가 있으면 그것을, 없으면 내장 zipfile — v0.9.3) |
-| 2 | add slides | `slideLayout5.xml` 기준으로 N_CONTENT 개 슬라이드 추가 |
-| 3 | sldIdLst 보정 | `presentation.xml.rels` 의 slide 관계 기준으로 정합 — 중복·고아 sldId 제거, 빠진 슬라이드만 추가(구판·신판 `add_slide.py` 모두 동일 결과) + **closing slide를 마지막으로 이동** |
-| 4 | layout 보정 | `slide3.xml.rels` 의 layout3 → layout5 (divider→contents) |
+| 1 | unpack | `ooxml_tools.py unpack` 으로 TEMPLATE.pptx 를 `unpacked_{lang}/` 에 풂 |
+| 2 | add slides | `ooxml_tools.py add-slides` 로 `slideLayout5.xml` 기준 본문 슬라이드 N_CONTENT 장 추가 (관계 ID·슬라이드 ID 는 다음 번호를 자동으로 씀) |
+| 3 | 순서 보정 | `ooxml_tools.py move-last slide5.xml` 로 맺음말을 sldIdLst 맨 끝으로 |
+| 4 | layout 보정 | `ooxml_tools.py set-layout` 으로 slide3 을 layout3 → layout5 (간지 → 본문) |
 | 5 | run build_py | `TARGET_UNPACKED=unpacked_{lang} python3 build_pptx_{lang}.py` 로 슬라이드 XML 작성 |
-| 6 | **verify_toc** | `verify_toc.py` 가 TOC ↔ 본문 챕터 정합성 검사 (실패시 빌드 중단) |
-| 7 | clean | `clean.py` 로 미참조 파일 제거 |
-| 8 | strip Google | `strip_google_extensions.py --unpacked` 로 GoogleSlides 잔존물 제거 |
-| 9 | pack | pptx 스킬에 `pack.py` 가 있으면 그것을, 없으면 내장 zipfile pack(`[Content_Types].xml` 첫 항목) — v0.9.3 |
-| 9b | validate | pptx 스킬 `scripts/office/validate.py {out}.pptx --original TEMPLATE.pptx` (스키마·관계·콘텐츠타입, 실패 시 중단, `SKIP_VALIDATE=1` 로 해제) — v0.9.3 |
-| 10 | 최종 검증 | Google 잔존물 0개, metadata 0개, zip OK 확인 |
+| 5b | 프로필 | `apply_profile.py` 가 슬라이드와 레이아웃 크레딧에 작성자 정보를 넣고, 빈 값이 남으면 중단 |
+| 6 | **verify_toc** | TOC ↔ 본문 챕터 정합성 검사 (실패 시 빌드 중단) |
+| 7 | clean | `ooxml_tools.py clean` 으로 sldIdLst 에 없는 슬라이드 파트 제거 |
+| 8 | strip Google | `strip_google_extensions.py --unpacked` 로 Google Slides 잔존물 제거 |
+| 9 | pack | `ooxml_tools.py pack` (XML 문법 검사 후 묶음) |
+| 10 | 최종 검증 | `ooxml_tools.py check` 로 구조 확인, Google 잔존물 0, metadata 0 |
+| 11 | validate (선택) | Anthropic pptx 스킬의 `scripts/office/validate.py` 가 있으면 `--original TEMPLATE.pptx` 로 스키마·관계 검증(실패 시 중단). 없으면 건너뜀, `SKIP_VALIDATE=1` 로 끔 (v0.9.3 에서 이어 옴) |
 
 이 시퀀스는 모델이 임의로 우회하거나 단계를 건너뛸 수 없도록 외부화되어 있습니다. **오케스트레이터를 사용하지 않고 직접 unpack/pack을 시도하지 마세요.**
 
-### STEP 3 — TEMPLATE.pptx / pptx 스킬 위치
+### STEP 3 : 의존성과 템플릿
 
-오케스트레이터가 자동 탐색합니다. pptx 스킬은 `PPTX_SKILL` 환경변수 → `/mnt/skills/public/pptx` → `~/.claude/skills/synced/*/pptx` → `/mnt/skills/*/pptx` → `/sessions/*/.../skills/pptx` 순으로 찾고(`scripts/add_slide.py`·`scripts/clean.py` 가 있는 디렉터리), TEMPLATE 은 `TEMPLATE` 환경변수 → 본 스킬의 `references/TEMPLATE.pptx` → 세션 안의 `TEMPLATE*.pptx` 순입니다. 환경변수로 명시할 수도 있습니다:
-```bash
-export PPTX_SKILL=/mnt/skills/public/pptx          # 자동 탐색이 실패할 때만
-export TEMPLATE=/path/to/TEMPLATE_custom.pptx      # 사용자가 올린 수정 템플릿을 쓸 때
-```
+- `build_pptx.sh` 는 같은 폴더의 `ooxml_tools.py`(표준 라이브러리만 씀)로 OOXML 을 다룸. 외부 pptx 스킬이나 python-pptx 가 필요 없음
+- 템플릿은 기본으로 `references/TEMPLATE.pptx` 를 씀. 수정한 템플릿을 쓰려면 `TEMPLATE=경로` 를 줌
+- 슬라이드 수가 13장에서 바뀌면 `N_CONTENT=(전체 장 수 - 5)` 를 줌
 
-사용자가 업로드한 수정 템플릿이 있으면 `TEMPLATE` 로 지정합니다. `build_pptx.sh` 는 sldIdLst 를 rels 기준으로 정합하므로 OLD/NEW 템플릿, 구판/신판 pptx 스킬 모두 자동 지원됩니다.
-
-### 슬라이드 구성 (기본 13장 — 7챕터 정본 구조)
+### 슬라이드 구성 (기본 13장: 7챕터 정본 구조)
 ```
 1   표지       (slideLayout1 / cover)
-2   INDEX      (slideLayout4 — TOC 7개 챕터 I-VII)
+2   INDEX      (slideLayout4: TOC 7개 챕터 I-VII)
 3   I-① 개요   (slideLayout5 / contents)
 4   I-② 현황
 5   II-① 기술
@@ -512,7 +495,7 @@ export TEMPLATE=/path/to/TEMPLATE_custom.pptx      # 사용자가 올린 수정 
 10  V. 산업 생태계
 11  VI. 미래 전망
 12  VII. Devil's Advocate
-13  감사합니다 (slideLayout2 / closing — sldIdLst 마지막)
+13  감사합니다 (slideLayout2 / closing: sldIdLst 마지막)
 ```
 
 > 동적 워크플로로 챕터가 5~9개로 가변되면 전체 슬라이드 수도 달라집니다. `N_CONTENT = (전체 슬라이드 수) - 5` 로 맞춰 `build_pptx.sh` 에 전달하세요.
@@ -521,12 +504,12 @@ export TEMPLATE=/path/to/TEMPLATE_custom.pptx      # 사용자가 올린 수정 
 ```
 Zone 1 y=264100   섹션헤더 (좌:챕터명#1A3A6B bold / 우:번호)
 Zone 2 y=641800   KEY MESSAGE 완결문장 (~임./~음.)
-Zone 3 y=1455150  소주제 (algn=ctr, #1A3A6B bold, u=sng) + y=1773900 cy=25400 별도 밑줄 사각형
-Zone 4 y=1850000  본문 (2단/표/막대차트/플로우차트 PNG)
-Zone 5 y=4715475  Source — 해당 슬라이드 수치의 출처 (claims.json 정합)
+Zone 3 y=1455150  소주제 (algn=ctr, #1A3A6B bold sz=1600, 글자 밑줄 u=sng, 배경 채움 없음)
+Zone 4 y=1850000  본문 텍스트 (2단/플로우차트 PNG). 표·막대차트는 y=1790000 부터
+Zone 5 y=4715475  Source: 해당 슬라이드 수치의 출처 (claims.json 정합)
 ```
 
-### rr() 함수 — 드리프트 1순위 버그
+### rr() 함수: 드리프트 1순위 버그
 ```python
 def rr(text, sz=None, bold=False, color=None, lang='ko', u='none'):
     sz_a = f' sz="{sz}"' if sz else ''
@@ -535,10 +518,10 @@ def rr(text, sz=None, bold=False, color=None, lang='ko', u='none'):
     col  = f'<a:solidFill><a:srgbClr val="{color}"/></a:solidFill>' if color else ''
     return f'<a:r><a:rPr lang="{lang}"{sz_a}{b_a}{u_a} dirty="0">{col}</a:rPr><a:t>{esc(text)}</a:t></a:r>'
 ```
-- **`u='none'` 기본값 필수** — 빠뜨리면 slideLayout5 defRPr u="sng" 상속됨.
-- **모든 Zone helper의 `<p:nvPr>`는 빈 `<p:nvPr/>`** — 다중 placeholder 충돌 → "읽을 수 없습니다" 에러.
+- **`u='none'` 기본값 필수**: 빠뜨리면 slideLayout5 defRPr u="sng" 상속됨.
+- **모든 Zone helper의 `<p:nvPr>`는 빈 `<p:nvPr/>`**: 다중 placeholder 충돌 → "읽을 수 없습니다" 에러.
 
-### 맺음말 슬라이드 (고정 — 정본 템플릿에 이미 포함)
+### 맺음말 슬라이드 (고정: 정본 템플릿에 이미 포함)
 - 한국어: "감사합니다." + 3개 안내 + `{AUTHOR_KR} | {PHONE_KR} | {EMAIL}` (profile.json)
 - 영어: "Thank You." + 3개 안내 + `{AUTHOR_EN} | {PHONE_EN} | {EMAIL}` (profile.json)
 
@@ -567,53 +550,51 @@ python3 references/gate_report.py --docx {주제}_KR_Report_{YYYYMMDD}.docx --la
 judge 채점: `verify_content.py --judge-extract judge_in_kr.json` 으로 텍스트를 덤프한 뒤, `references/quality_rubric.md` 의 8기준(16점 만점, 합격 ≥12 + 0점 없음)으로 채점해 `judge_verdict_kr.json` 작성. **단일 컨텍스트 모드에서는 "비평가 모자"를 쓰고 채점하되, #8(인사이트 깊이)을 후하게 주지 않도록 주의** (동적 워크플로에서는 별도 critic 에이전트가 수행).
 
 ### Word 추가 확인
-- `node --check build_kr.js` 통과, `unzip -t {파일}.docx` 구조 OK
+- `node --check build_kr.js` 통과, `python3 -m zipfile -t {파일}.docx` 구조 OK (unzip 이 없는 Windows 에서도 됨)
 - 원문이 KR/EN이 아닐 때: `python3 references/verify_lang_purity.py --auto {파일}.docx` 통과
 - ShadingType.CLEAR, 이미지 크롭 후 실제 높이, 첫페이지 번호 미표시
 
 ### PowerPoint 추가 확인 (오케스트레이터가 자동 수행, 수동 재확인)
-- `unzip -t {파일}.pptx` 구조 OK
+- `python3 references/ooxml_tools.py check {파일}.pptx` 구조 OK (슬라이드 순서, 관계, Content_Types 등록)
 - `verify_lang_purity.py` 통과 (KR: 가나 0개·한자 ≤ 10 / EN: CJK·가나 0개)
-- Google 잔존물 0개: `unzip -p file.pptx ppt/presentation.xml | grep -c 'customschemas\.google\|customooxmlschemas\.google'` → 0
-- metadata 0개: `unzip -l file.pptx | grep -c 'ppt/metadata'` → 0
+- Google 잔존물 0개, metadata 0개: `build_pptx.sh` 마지막 줄이 `OK ... Google 잔존물 0, metadata 0, zip OK` 인지 확인
 - 다중 `<p:ph>` 없음: `grep -c '<p:ph' unpacked_kr/ppt/slides/slide5.xml` ≤1
 - 맺음말 슬라이드가 sldIdLst의 마지막에 있는지 확인
 
-### Phase 6.5 — 재시도 루프 (loop-until-done)
+### Phase 6.5: 재시도 루프 (loop-until-done)
 
-`gate_report.json` 의 `pass=false` 이면 `fixes[]` 를 읽어 **실패한 슬라이드/섹션만** build 소스(build_*.js / build_pptx_*.py)와 claims.json 에 패치 후 재빌드. **상한 3회** — 초과 시 무한 루프 금지, 남은 fixes 를 사용자에게 NEEDS_REVIEW 로 보고.
+`gate_report.json` 의 `pass=false` 이면 `fixes[]` 를 읽어 **실패한 슬라이드/섹션만** build 소스(build_*.js / build_pptx_*.py)와 claims.json 에 패치 후 재빌드. **상한 3회**: 초과 시 무한 루프 금지, 남은 fixes 를 사용자에게 NEEDS_REVIEW 로 보고.
 
 ---
 
 ## Phase 7: 결과물 전달
 
-### 7-A — $WORKSPACE 적재 (영구 저장)
+### 7-A : $WORKSPACE 에 모으기
 
 ```bash
-cp {주제}_KR_Report_{YYYYMMDD}.docx       "$WORKSPACE/"
-cp {주제}_EN_Report_{YYYYMMDD}.docx       "$WORKSPACE/"
-cp {주제}_KR_Presentation_{YYYYMMDD}.pptx "$WORKSPACE/"
-cp {주제}_EN_Presentation_{YYYYMMDD}.pptx "$WORKSPACE/"
+# Phase 4·5 에서 바로 $WORKSPACE 에 썼다면 이 단계는 확인만 함
+cp {주제}_KR_Report_{YYYYMMDD}.docx       "$WORKSPACE/" 2>/dev/null || true
+cp {주제}_EN_Report_{YYYYMMDD}.docx       "$WORKSPACE/" 2>/dev/null || true
+cp {주제}_KR_Presentation_{YYYYMMDD}.pptx "$WORKSPACE/" 2>/dev/null || true
+cp {주제}_EN_Presentation_{YYYYMMDD}.pptx "$WORKSPACE/" 2>/dev/null || true
 cp claims.json manifest.json              "$WORKSPACE/" 2>/dev/null || true
 ls -la "$WORKSPACE"
 ```
 
-> Phase 0 의 `$WORKSPACE` 가 이미 `{WORKSPACE_ROOT}\{주제}_{YYYYMMDD}` 이므로 별도 아카이브 복사가 필요 없습니다. (Phase 0 fallback 으로 세션 outputs 를 쓴 경우에만 `references/copy_to_insights.ps1` 또는 `copy_to_insights.sh {주제} {YYYYMMDD}` 로 OneDrive 보관을 시도합니다.)
-
-### 7-B — present_files 안전 검증 (필수)
-
-`present_files` 호출 **전에** 다음을 확인:
+### 7-B : 환경별 전달 (필수)
 
 ```bash
-# 4개 파일 모두 $WORKSPACE 하위에 실재하는지
+# 4개 파일이 모두 $WORKSPACE 에 있는지 먼저 확인
 for f in "$WORKSPACE"/{주제}_*_{Report,Presentation}_*; do ls -la "$f" || echo "MISSING: $f"; done
-# $WORKSPACE 가 /sessions/*/mnt/outputs 가 아닌지 (임시 경로 금지)
-case "$WORKSPACE" in */mnt/outputs*) echo "⚠️ 임시 경로 — 카드 링크가 세션 후 깨짐";; esac
 ```
 
-검증 통과 후에만 `present_files` 로 4개 파일을 동시 제시.
+| 환경 | 전달 방법 |
+|---|---|
+| Claude Code | 4개 파일의 경로를 알려 줌 |
+| Claude 앱 (클라우드 작업 공간) | 파일 전달 도구로 4개 파일을 보냄. 사용자 컴퓨터 폴더가 연결돼 있으면 그 폴더에도 저장 |
+| Cowork | `$WORKSPACE` 가 `/sessions/*/mnt/outputs` 가 아닌지 확인한 뒤 `present_files` 로 4개 파일을 함께 제시 (임시 경로의 카드 링크는 세션 뒤에 깨짐) |
 
-### 7-C — 사용자 보고
+### 7-C: 사용자 보고
 
 빌드 요약을 함께 보고: 파일 크기·페이지/슬라이드 수, gate_report 4게이트 결과, **claims 통계(총/verified/estimate/removed)**, judge 점수. 사용자가 .docx/.pptx 를 열어둔 상태로 복사가 IO Lock 에러를 내면 실패 파일명을 보고하고 앱을 닫게 한 뒤 재시도.
 
@@ -632,9 +613,9 @@ case "$WORKSPACE" in */mnt/outputs*) echo "⚠️ 임시 경로 — 카드 링�
 - **hallucination**: 작성 컨텍스트가 자기 수치를 의심하지 않음 → **독립 검증 에이전트의 deep verification** (v0.9).
 
 ### 워크플로 파일
-`references/build_4set.workflow.js` — **템플릿**이다(verbatim 스크립트 아님). 소스에 맞게 단계·프롬프트·모델을 조정해 작성한다. 입력은 전역 `args`(sources, titleKR, slug, langs, docTypes, maxRetries 등).
+`references/build_4set.workflow.js`: **템플릿**이다(verbatim 스크립트 아님). 소스에 맞게 단계·프롬프트·모델을 조정해 작성한다. 입력은 전역 `args`(sources, titleKR, slug, langs, docTypes, maxRetries 등).
 
-### 오케스트레이션 단계(패턴 매핑) — v0.9
+### 오케스트레이션 단계(패턴 매핑, v0.9)
 ```
 A. CLASSIFY  (classify-and-act)        소스 분석 → 구조 결정.
    ★ 고정 7챕터/13장 제약을 푼다: 챕터 수를 소스 깊이에 따라 5~9개로 가변.
@@ -710,24 +691,24 @@ G. FINALIZE  (observability)            manifest.json(plan·claims 통계) 기�
 - [ ] 폰트 KR=Malgun Gothic, EN=Arial
 - [ ] 한국어 차트 NanumGothic
 - [ ] 이미지 크기 크롭 후 실제값
-- [ ] `unzip -t` 통과
+- [ ] `python3 -m zipfile -t` 통과
 
 **PowerPoint KR/EN (오케스트레이터가 자동 검사하는 항목 포함)**
 - [ ] TEMPLATE.pptx 기반 unpack/pack (python-pptx 미사용)
 - [ ] 모든 Zone helper의 `<p:nvPr>` 빈 태그
 - [ ] `rr()` 의 `u='none'` 기본값
-- [ ] Zone 3 solidFill 없음 + 별도 밑줄 사각형
+- [ ] Zone 3 solidFill 없음, 글자 밑줄(u=sng)
 - [ ] Zone 1~5 모두 존재, KEY MESSAGE 완결문장, Zone5 Source 표기
 - [ ] 영어본 전화번호 국제 표기 (profile.json PHONE_EN), 플레이스홀더 잔존 0건
 - [ ] **맺음말 슬라이드가 sldIdLst의 마지막** (오케스트레이터 자동)
 - [ ] **slide3 layout3→layout5 보정 완료** (오케스트레이터 자동)
-- [ ] **`verify_toc.py` 가 PASS** — TOC 챕터 수 = 본문 챕터 수
+- [ ] **`verify_toc.py` 가 PASS**: TOC 챕터 수 = 본문 챕터 수
 - [ ] **Google 잔존물 0개** (오케스트레이터 자동 검사)
 - [ ] PDF 변환 시각 검증 또는 실제 PowerPoint에서 열림 확인
 
 **저장·전달**
-- [ ] Phase 0 `$WORKSPACE` (OneDrive 영구 폴더)에 4종 + claims.json 저장
-- [ ] Phase 7-B 안전 검증 후 `present_files` 호출
+- [ ] Phase 0 에서 정한 `$WORKSPACE` 에 4종 + claims.json 저장
+- [ ] Phase 7-B 의 환경별 방법으로 전달
 - [ ] gate_report 4게이트 결과와 claims 통계를 사용자에게 보고
 
 체크박스 중 하나라도 비어 있으면 결과물은 신동형 인사이트 정합성에서 벗어난 것입니다.

@@ -9,15 +9,15 @@
 | 항목 | 버전/경로 |
 |------|-----------|
 | Node.js | v18+ |
-| docx npm 패키지 | NODE_PATH=/usr/local/lib/node_modules_global/lib/node_modules |
-| Python | 3.8+ |
-| PIL/Pillow | pip install Pillow --break-system-packages |
-| cairosvg | pip install cairosvg --break-system-packages |
-| NanumGothic.ttf | ~/.fonts/ (fontconfig 등록) |
+| docx npm 패키지 | `npm install -g docx`, 실행 때 `NODE_PATH="$(npm root -g)"` |
+| Python | 3.9+ |
+| PIL/Pillow | `pip install Pillow` (관리되는 환경이면 `--break-system-packages` 를 붙임) |
+| cairosvg (선택) | `pip install cairosvg` |
+| NanumGothic.ttf | pip 패키지 koreanize-matplotlib 의 fonts 폴더 (SKILL.md Phase 3, OS 무관) |
 
 ```bash
 # 환경 확인
-NODE_PATH=/usr/local/lib/node_modules_global/lib/node_modules node -e "require('docx'); console.log('docx OK')"
+NODE_PATH="$(npm root -g)" node -e "require('docx'); console.log('docx OK')"
 python3 -c "import cairosvg; print('cairosvg OK')"
 fc-match "NanumGothic"
 ```
@@ -27,7 +27,7 @@ fc-match "NanumGothic"
 ## 빌드 파일 구조
 
 ```
-/sessions/{session-id}/
+{작업 폴더}/
 ├── workflow_chart_kr.png          # Phase 3에서 생성 (900×1020px)
 ├── workflow_chart_en.png          # Phase 3에서 생성 (900×1020px)
 ├── workflow_chart_kr_cropped.png  # PIL 크롭 후 (하단 여백 제거)
@@ -207,7 +207,7 @@ Packer.toBuffer(doc).then(buf => {
 
 ---
 
-## ★ 표지 구성 (v0.2 — 최신 기준)
+## ★ 표지 구성 (v0.2: 최신 기준)
 
 ```javascript
 // 제목 라인 1 (「제목:」 형식 또는 주제 첫 줄)
@@ -257,7 +257,7 @@ PB(),  // ← 표지+차트 페이지 끝 (PB는 여기 1개만)
 
 ---
 
-## ★ Executive Summary (v0.2 — 통합 textBox)
+## ★ Executive Summary (v0.2: 통합 textBox)
 
 ```javascript
 H1('Executive Summary'),  // 또는 한국어: H1('Executive Summary')
@@ -284,12 +284,12 @@ BK(), PB(),
 
 ---
 
-## ★ 챕터별 본문 (v0.2 — 내러티브 산문체)
+## ★ 챕터별 본문 (v0.2: 내러티브 산문체)
 
 ```javascript
 PB(),
-H1('Chapter I. {챕터 제목}'),
-H2('1.1 {소주제}'),
+H1C('{챕터 제목}'),      // 빌드가 「1. {챕터 제목}」 으로 번호를 붙임 (H1 에 번호를 직접 쓰면 HEADNUM 게이트 실패)
+H2C('{소주제}'),         // 「1.1 {소주제}」
 textBox('KEY MESSAGE', [
   P(N('완결 분석 문장. ~입니다 어미. 40~100자. 비유나 수치 포함.')),
 ]),
@@ -334,7 +334,7 @@ BK(), PB(),
 
 ```javascript
 PB(),
-H1("Devil's Advocate — 비판적 검토"),
+H1("Devil's Advocate: 비판적 검토"),
 // 5개 관점, 각각 별도 textBox
 textBox('① {비판 포인트 제목}', [
   P(N('비판적 관점 내러티브. 단순 반박이 아닌 구조적 약점 분석. 입니다체.')),
@@ -374,10 +374,10 @@ new Paragraph({
 SyntaxError를 일으킵니다.
 
 ```javascript
-// ❌ 위험 — SyntaxError 발생
+// ❌ 위험: SyntaxError 발생
 P(N('텍스트를 생성하는 '두뇌'만 있었습니다')),
 
-// ✅ 안전 — 한국식 꺽쇠 사용
+// ✅ 안전: 한국식 꺽쇠 사용
 P(N('텍스트를 생성하는 「두뇌」만 있었습니다')),
 ```
 
@@ -418,17 +418,15 @@ shading: { type: ShadingType.SOLID, fill: 'F0F4FA' }
 영어:   {주제코드}_EN_Report_{YYYYMMDD}.docx
 ```
 
-출력 경로 — 워크스페이스 폴더 동적 탐색:
+출력 경로 : `node build_kr.js <출력.docx>` 처럼 인자로 줌(또는 `OUT=경로`). 저장 폴더는 SKILL.md Phase 0 에서 정한 `$WORKSPACE` 를 씀.
 
 ```bash
-WORKSPACE=$(find /sessions -maxdepth 4 -type d -name "ClaudeCoworkFile" 2>/dev/null | head -1)
-echo "WORKSPACE=$WORKSPACE"
-# 예: /sessions/funny-jolly-euler/mnt/ClaudeCoworkFile
+node build_kr.js "$WORKSPACE/{주제코드}_KR_Report_{YYYYMMDD}.docx"
 ```
 
 ---
 
-## 챕터 자동 번호 헬퍼 — H1C / H2C (v0.9.1 필수)
+## 챕터 자동 번호 헬퍼: H1C / H2C (v0.9.1 필수)
 
 본문 챕터 헤딩은 **반드시 H1C/H2C 헬퍼**로 작성한다. 번호가 코드 카운터에서 자동
 증가하므로, 내용 치환 시 `1. / 1.1` 번호가 누락되는 드리프트가 구조적으로 불가능하다.
@@ -447,7 +445,7 @@ const H2C = (t) => { _sec += 1; return H2(`${_ch}.${_sec} ${t}`); };      // "1.
 | 챕터 내 소제목 | `H2C('소제목')` | `1.1`, `1.2`, `2.1` … |
 | Executive Summary / 핵심 질문과 답변 / 맺음말 / 참고 자료 / 핵심 키워드 | `H1()`/`H2()` (번호 없음) | 그대로 |
 
-- 챕터 순서를 바꾸거나 추가/삭제해도 번호는 자동 재배열된다 — 텍스트에 번호를 직접 쓰지 말 것.
+- 챕터 순서를 바꾸거나 추가/삭제해도 번호는 자동 재배열되므로 텍스트에 번호를 직접 쓰지 않는다.
 - `verify_content.py` 의 **HEADNUM 게이트(ERROR)** 가 검사한다: 번호 없는 챕터 H1,
   챕터-소제목 번호 불일치(예: 2장 아래 `1.3`), 번호 순서 오류(1..N 연속 위반).
 - PPTX TOC(로마숫자 I~VII)와 Word 번호(1~7)는 표기만 다르고 챕터 구성은 동일해야 한다.

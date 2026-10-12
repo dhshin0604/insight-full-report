@@ -1,17 +1,17 @@
 ---
 name: quality-core
 description: |
-  신동형 공통 품질 코어 v0.1 — 어떤 문서·초안·보고서든 신동형 인사이트의 5대 품질 장치(Claims Ledger 사실 검증, So-What 통찰 강제, 문형·표기 규율, 16점 judge 채점, 재시도≤3회 루프)를 적용해 검증·개선한다. 산출물 형식 무관(MD·텍스트·Word 초안·이메일·타인이 쓴 보고서). 4종 정본 문서 생성은 본 스킬이 아니라 generate-full-report가 담당하며, 본 스킬은 '코어만 떼어낸' 범용 검증기다.
-  Triggers (한국어): 품질 코어, 품질 코어 적용, 품질 검증, 퀄리티 체크, 이 초안 검증해줘, 팩트체크 게이트, claims 검증, 수치 검증해줘, So-What 점검, 인사이트 점검, 16점 채점, 루브릭 채점, 반론 점검, 딥체크만.
+  신동형 공통 품질 코어 v0.1: 어떤 문서·초안·보고서든 신동형 인사이트의 5대 품질 장치(Claims Ledger 사실 검증, So-What 통찰 강제, 문형·표기 규율, 16점 judge 채점, 재시도≤3회 루프)를 적용해 검증·개선한다. 산출물 형식 무관(MD·텍스트·Word 초안·이메일·타인이 쓴 보고서). 4종 정본 문서 생성은 본 스킬이 아니라 generate-full-report가 담당하며, 본 스킬은 '코어만 떼어낸' 범용 검증기다.
+  Triggers (한국어): 품질 코어, 품질 코어 적용, 품질 검증, 퀄리티 체크, 이 초안 검증해줘, 팩트체크 게이트, claims 검증, 수치 검증해줘, So-What 점검, 인사이트 점검, 16점 채점, 루브릭 채점, 반론 점검, 딥체크만, 초안 딥체크.
   Triggers (English): quality core, verify this draft, factcheck gate, claims ledger check, so-what review, rubric scoring, deep verification only.
 ---
 
-# 공통 품질 코어 v0.1 — 범용 품질 검증·개선 스킬
+# 공통 품질 코어 v0.1: 범용 품질 검증·개선 스킬
 
 > 신동형 인사이트 공정의 심장부(품질 코어)만 떼어내 **어떤 문서에든** 적용한다.
 > 핵심 사상: **품질은 모델의 성실함에 부탁하는 것이 아니라, 원장과 게이트로 강제하는 것이다.**
 
-## 🚨 GATE 0 — 즉시 중단 체크
+## 🚨 GATE 0: 즉시 중단 체크
 
 다음 중 하나라도 해당하면 **STOP** 후 본 SKILL.md를 처음부터 다시 읽기:
 
@@ -22,7 +22,7 @@ description: |
 5. 4종 정본 문서(Word KR/EN + PPTX KR/EN) 생성 요청이다 → STOP. 본 스킬이 아니라 `generate-full-report`로 핸드오프.
 6. 필수 reference를 한 개도 읽지 않고 작업을 시작했다 → STOP. 아래 GATE 1 수행.
 
-## 🛑 GATE 1 — 필수 읽기 (MANDATORY READS)
+## 🛑 GATE 1: 필수 읽기 (MANDATORY READS)
 
 트리거 시 **첫 행동은 반드시** 아래 4개 파일을 Read로 모두 읽는 것:
 
@@ -33,9 +33,9 @@ description: |
 4. references/style-rules.md     ← 문형·표기 규율 (사실↔해석, 추정 표기, 출처)
 ```
 
-보조 도구: `references/verify_claims_lite.py` — MD/텍스트 대상 경량 기계 대조 스크립트.
+보조 도구: `references/verify_claims_lite.py` (MD/텍스트 대상 경량 기계 대조 스크립트). 경로는 스킬 폴더 `${CLAUDE_SKILL_DIR}` 기준(Claude Code, Cowork 는 실제 경로로 바꿔 보여 줌. 그대로 보이면 이 SKILL.md 가 있는 폴더).
 
-## 🚫 ANTI-DRIFT — 절대 금지
+## 🚫 ANTI-DRIFT: 절대 금지
 
 | ❌ 금지 | ✅ 대신 |
 |---|---|
@@ -59,10 +59,10 @@ description: |
 
 ## 워크플로 (6 Phase)
 
-### Phase 1 — 원장 개설
+### Phase 1: 원장 개설
 대상 문서에서 사실 주장(claim)을 **전수 추출**해 `claims.json` 등록. 등록 대상: 수치(금액·비율·성장률·순위), 사건(출시일·인수합병·규제), 인용, 고유명사 간 관계. 스키마는 claims-ledger.md §1.
 
-### Phase 2 — Deep Verification
+### Phase 2: Deep Verification
 verified가 아닌 claim을 하나씩 WebSearch/WebFetch/소스 재독으로 확인:
 - 확인 성공 → `verified` (+source/url)
 - 합리적 계산·외삽 → `estimate` (+method/note, 본문 `추정`/`est.` 표기)
@@ -70,17 +70,17 @@ verified가 아닌 claim을 하나씩 WebSearch/WebFetch/소스 재독으로 확
 
 이후 **회의 패스**: 비평가 모자를 쓰고 verified 표본을 재확인. 대형 작업은 claim 묶음(5~10개)당 검증 서브에이전트 fan-out + skeptic 재감사(claims-ledger.md §3).
 
-### Phase 3 — So-What 패스
+### Phase 3: So-What 패스
 핵심 문장(제목·헤드라인·단락 첫 문장)을 사다리에 올려 판정: L1(사실 나열)이면 L2+ 로 재작성. 챕터/섹션당 1개 이상 L3 도달, 핵심 주장마다 반론 1개 처리, 핵심 사건은 3렌즈 검토, 전망은 조건문+estimate. 상세는 so-what.md.
 
-### Phase 4 — 문형·표기 패스
+### Phase 4: 문형·표기 패스
 사실↔해석 문형 분리, estimate `추정` 표기, 수치 밀집부 출처 표기, 비교축 동반 여부를 전수 점검. style-rules.md 적용. (선택) 산문체 요청 시 개조식 → analyst 산문 전환.
 
-### Phase 5 — judge 채점
-`quality-rubric.md`의 8기준(각 0·1·2점, 16점 만점)으로 채점하고 기준별 근거 1문장 기록. **합격 = 총점 ≥12 그리고 0점 없음.** 가능하면 작성자와 다른 컨텍스트(critic 서브에이전트)가 채점, 단일 컨텍스트면 비평가 모자 — 특히 #8(인사이트 깊이)을 후하게 주지 않는다. MD/텍스트 대상이면 `verify_claims_lite.py`로 기계 대조 병행.
+### Phase 5: judge 채점
+`quality-rubric.md`의 8기준(각 0·1·2점, 16점 만점)으로 채점하고 기준별 근거 1문장 기록. **합격 = 총점 ≥12 그리고 0점 없음.** 가능하면 작성자와 다른 컨텍스트(critic 서브에이전트)가 채점, 단일 컨텍스트면 비평가 모자: 특히 #8(인사이트 깊이)을 후하게 주지 않는다. MD/텍스트 대상이면 `verify_claims_lite.py`로 기계 대조 병행.
 
-### Phase 6 — 재시도 루프와 출구
-불합격이면 0~1점 기준의 fixes만 패치 후 Phase 5 재채점. **상한 3회** — 초과 시 남은 문제를 `NEEDS_REVIEW`로 사용자에게 보고하고 멈춘다.
+### Phase 6: 재시도 루프와 출구
+불합격이면 0~1점 기준의 fixes만 패치 후 Phase 5 재채점. **상한 3회**: 초과 시 남은 문제를 `NEEDS_REVIEW`로 사용자에게 보고하고 멈춘다.
 
 ## 산출물 (검증 보고)
 

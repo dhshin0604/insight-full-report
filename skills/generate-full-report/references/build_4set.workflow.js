@@ -1,5 +1,5 @@
 /* =============================================================================
- * build_4set.workflow.js — 신동형 인사이트 4종 세트 동적 워크플로 (TEMPLATE) v0.9
+ * build_4set.workflow.js: 신동형 인사이트 4종 세트 동적 워크플로 (TEMPLATE) v0.9
  *
  * 이 파일은 "그대로 실행하는 스크립트"가 아니라 **템플릿**이다(Anthropic 권고).
  * Claude 는 작업/소스에 맞게 단계 수·프롬프트·모델을 조정해 워크플로를 작성한다.
@@ -19,7 +19,7 @@
  *
  * 이 구조가 막는 실패 모드(블로그):
  *   agentic laziness(중도 포기) · self-preferential bias(자기편애) · goal drift(목표표류)
- *   + hallucination(미검증 수치) — v0.9 FACTCHECK 단계가 구조적으로 차단
+ *   + hallucination(미검증 수치): v0.9 FACTCHECK 단계가 구조적으로 차단
  * ============================================================================= */
 
 const REF = "references"; // 스킬 references 경로 (런타임에 맞게 조정)
@@ -87,7 +87,7 @@ ${glossary ? "- Glossary 재등장열만 사용" : ""}
   }
   const chapters = await Promise.all(plan.chapters.map(draftChapter)); // fan-out
 
-  /* ── Phase C2. FACTCHECK (deep verification fan-out) — v0.9 신규 ──────────
+  /* ── Phase C2. FACTCHECK (deep verification fan-out): v0.9 신규 ──────────
    * claim 묶음(8개)마다 '작성자가 아닌' 검증 에이전트를 fan-out.
    * skeptic 에이전트가 verified 표본을 재감사해 false-verified 차단.             */
   const allClaims = chapters.flatMap(ch => (ch.claims || []).map(c => ({ ...c, roman: ch.roman })));
@@ -103,14 +103,14 @@ ${REF}/factcheck-pipeline.md 규칙:
 - 직접 확인 → status=verified (+source/url 보강)
 - 확인 불가하나 합리적 계산/외삽 → status=estimate (+method, note)
 - 확인 실패·소스와 모순 → status=removed
-반환: claims 배열(JSON) — 각 항목에 status/source/url/note 갱신.
+반환: claims 배열(JSON): 각 항목에 status/source/url/note 갱신.
 claims: ${JSON.stringify(batch)}`
     })).json;
   }
   const verifiedBatches = await Promise.all(batches.map(verifyBatch)); // fan-out
   const ledger = verifiedBatches.flat();
 
-  // skeptic: verified 표본 재검증 (전수 아닌 표본 — 비용 절충)
+  // skeptic: verified 표본 재검증 (전수 아닌 표본: 비용 절충)
   const sample = ledger.filter(c => c.status === "verified").filter((_, i) => i % 4 === 0);
   if (sample.length) {
     const audit = (await spawn({
@@ -125,7 +125,7 @@ claims: ${JSON.stringify(batch)}`
     }
   }
 
-  // removed claim 반영 — 해당 챕터를 작성자 모델이 수정
+  // removed claim 반영: 해당 챕터를 작성자 모델이 수정
   const removedByCh = {};
   for (const c of ledger.filter(c => c.status === "removed")) {
     (removedByCh[c.roman] = removedByCh[c.roman] || []).push(c);
@@ -141,7 +141,7 @@ removed: ${JSON.stringify(removedByCh[roman])}
   }
   // ledger 는 빌드 단계에서 claims.json 으로 저장 → gate 가 사용
 
-  // 합성: Executive Summary(4파트) 작성 — 배리어 이후 1회
+  // 합성: Executive Summary(4파트) 작성: 배리어 이후 1회
   const execSummary = (await spawn({
     model: "opus",
     prompt: `다음 챕터들을 관통하는 Executive Summary 를 4파트(${plan.execSummaryParts.join(" / ")})로,
@@ -179,7 +179,7 @@ ${JSON.stringify(chapters).slice(0, 6000)}`
 
   /* ── Phase E. BUILD DOCUMENTS (fan-out) ───────────────────────────────────
    * 문서 4종을 병렬 빌드. 각 빌드 에이전트가 정본 템플릿을 적응해 실행한다.
-   * (스크립트 자체는 셸/FS 접근 불가 — 에이전트가 cp/치환/실행을 수행)            */
+   * (스크립트 자체는 셸/FS 접근 불가: 에이전트가 cp/치환/실행을 수행)            */
   const targets = [];
   for (const lang of cfg.langs) {
     for (const dt of cfg.docTypes) targets.push({ lang, dt });
@@ -190,7 +190,7 @@ ${JSON.stringify(chapters).slice(0, 6000)}`
       ? `bash ${REF}/build_pptx_checked.sh ${t.lang} build_pptx_${t.lang}.py ${cfg.slug}_${t.lang.toUpperCase()}_Presentation.pptx`
       : `node build_${t.lang}.js 실행 후 python3 ${REF}/gate_report.py --docx --claims claims.json 으로 검사`;
     return (await spawn({
-      model: "sonnet", // 빌드는 절차 실행 — 가벼운 모델
+      model: "sonnet", // 빌드는 절차 실행: 가벼운 모델
       tools: ["Bash", "Read", "Write", "Edit"],
       prompt: `1) content.claims 를 claims.json 으로 저장.
 2) 정본 템플릿을 cp 후 아래 content 로 치환해 ${t.dt.toUpperCase()}(${t.lang}) 를 빌드하라.

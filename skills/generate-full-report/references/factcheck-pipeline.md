@@ -1,4 +1,4 @@
-# factcheck-pipeline.md — Deep Verification (할루시네이션 제거 파이프라인) v0.9
+# factcheck-pipeline.md: Deep Verification (할루시네이션 제거 파이프라인) v0.9
 
 > 목적: 본문에 들어가는 **모든 사실 주장(claim)** 을 출처와 1:1로 묶어, 검증되지 않은
 > 수치·고유명사·인용이 최종 산출물에 남지 못하게 한다. Anthropic 블로그의
@@ -6,7 +6,7 @@
 
 ---
 
-## 1. Claims Ledger (claims.json) — 단일 진실원
+## 1. Claims Ledger (claims.json): 단일 진실원
 
 Phase 2(구조화) 진행 중 본문 초안에 **사실 주장**이 등장할 때마다 ledger에 등록한다.
 빌드 디렉터리 루트에 `claims.json` 으로 저장:
@@ -60,7 +60,7 @@ Phase 2(구조화) 진행 중 본문 초안에 **사실 주장**이 등장할 �
 |---|---|---|
 | `verified` | 소스 원문 또는 웹에서 직접 확인 | 그대로 사용 + Source 표기 |
 | `estimate` | 직접 확인 불가, 계산/외삽/추정 | 본문에 반드시 `추정`(KR) / `est.`(EN) 표기 |
-| `removed` | 검증 실패 | **본문에서 삭제** — 최종 문서에 남으면 게이트 FAIL |
+| `removed` | 검증 실패 | **본문에서 삭제**: 최종 문서에 남으면 게이트 FAIL |
 
 ---
 
@@ -79,7 +79,7 @@ Phase 2(구조화) 진행 중 본문 초안에 **사실 주장**이 등장할 �
 
 ---
 
-## 3. 검증 실행 — 두 가지 모드
+## 3. 검증 실행: 두 가지 모드
 
 ### 3-A. 단일 컨텍스트 모드 (기본 Phase 2.7)
 초안 완성 후 **비평가 패스**를 별도로 1회 수행한다:
@@ -88,17 +88,17 @@ Phase 2(구조화) 진행 중 본문 초안에 **사실 주장**이 등장할 �
 3. 확인 실패 → status=removed + 본문에서 해당 문장 수정/삭제
 4. `python3 references/verify_claims.py --claims claims.json --docx {파일}` 로 기계 검증
 
-### 3-B. 동적 워크플로 모드 (Phase D — deep verification fan-out)
+### 3-B. 동적 워크플로 모드 (Phase D: deep verification fan-out)
 `build_4set.workflow.js` 의 FACTCHECK 단계:
 - **추출 에이전트** 1개가 챕터 초안 전체에서 claim 목록 추출
-- claim **묶음(5~10개)당 검증 에이전트** 1개를 fan-out — 각자 깨끗한 컨텍스트에서
+- claim **묶음(5~10개)당 검증 에이전트** 1개를 fan-out: 각자 깨끗한 컨텍스트에서
   소스 대조·웹 검색으로 verified/estimate/removed 판정 (self-preferential bias 차단)
 - **회의(skeptic) 에이전트** 1개가 verified 판정 중 표본을 재검증 (false-verified 차단)
 - 결과를 claims.json 으로 합산 → removed claim 반영해 챕터 수정
 
 ---
 
-## 4. verify_claims.py — 기계 게이트
+## 4. verify_claims.py: 기계 게이트
 
 ```bash
 # DOCX
@@ -108,10 +108,10 @@ python3 references/verify_claims.py --claims claims.json --unpacked unpacked_kr 
 ```
 
 검사 항목:
-- [E] `NUM_UNREG` — 본문 유의미 수치가 ledger에 미등록 (연도 단독·전화번호·슬라이드 좌표 제외)
-- [E] `REMOVED_LEAK` — status=removed claim 텍스트가 본문에 잔존
-- [E] `EST_UNMARKED` — estimate claim 수치가 본문에 `추정`/`est.` 표기 없이 등장
-- [W] `NO_URL` — verified claim에 url/source 부재
+- [E] `NUM_UNREG`: 본문 유의미 수치가 ledger에 미등록 (연도 단독, 전화번호, 12 이하 정수, Word 헤딩의 장·절 번호, 캡션·질문 번호, 날짜는 제외 : v1.0)
+- [E] `REMOVED_LEAK`: status=removed claim 텍스트가 본문에 잔존
+- [E] `EST_UNMARKED`: estimate claim 수치가 본문에 `추정`/`est.` 표기 없이 등장
+- [W] `NO_URL`: verified claim에 url/source 부재
 
 `gate_report.py` 가 `--claims claims.json` 옵션으로 이 게이트를 toc/content/judge와 합산한다.
 

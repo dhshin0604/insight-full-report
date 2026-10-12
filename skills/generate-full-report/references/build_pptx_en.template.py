@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build English PPTX slides — canonical 신동형 인사이트 정본 템플릿.
+"""Build English PPTX slides: canonical 신동형 인사이트 정본 템플릿.
 
 build_pptx.sh 오케스트레이터에서 호출된다. unpack/pack/strip 등은 오케스트레이터가
 처리하므로, 이 스크립트는 슬라이드 XML 파일만 작성한다.
@@ -7,6 +7,14 @@ build_pptx.sh 오케스트레이터에서 호출된다. unpack/pack/strip 등은
 환경변수 TARGET_UNPACKED 가 unpack된 디렉터리(예: 'unpacked_en') 를 가리킨다.
 """
 import os, re
+
+import sys
+# Windows 의 cp949·cp1252 콘솔과 파이프에서도 출력 때문에 멈추지 않게 UTF-8 로 맞춤
+for _stdio in (sys.stdout, sys.stderr):
+    try:
+        _stdio.reconfigure(encoding='utf-8', errors='replace')
+    except (AttributeError, ValueError):
+        pass
 
 TARGET = os.environ.get('TARGET_UNPACKED', 'unpacked_en')
 SLIDES = f'{TARGET}/ppt/slides'
@@ -229,13 +237,13 @@ def idx_row_en(num, text, row_id):
     return f'<a:tr h="590000">{cell(num, algn="r", bold=True)}{cell(text)}</a:tr>'
 
 toc_en = [
-    ('I.',    'Overall Status — Concepts, Features, Global Status & Market Size'),
-    ('II.',   'Technology Trends — Algorithm 4 Pathways, Data Strategy, VLA Evolution'),
-    ('III.',  'Products & Applications — Humanoid & Industrial Robot Products'),
-    ('IV.',   'Smart Transport & New Products — Vehicles, Drones & Novel Devices'),
-    ('V.',    'Industry Ecosystem — 352+ Companies, Supply Chain & Standardization'),
-    ('VI.',   'Future Outlook — $339.8B Market, Technology Roadmap & Implications'),
-    ("VII.",  "Devil's Advocate — 5 Critical Structural Challenges"),
+    ('I.',    'Overall Status: Concepts, Features, Global Status & Market Size'),
+    ('II.',   'Technology Trends: Algorithm 4 Pathways, Data Strategy, VLA Evolution'),
+    ('III.',  'Products & Applications: Humanoid & Industrial Robot Products'),
+    ('IV.',   'Smart Transport & New Products: Vehicles, Drones & Novel Devices'),
+    ('V.',    'Industry Ecosystem: 352+ Companies, Supply Chain & Standardization'),
+    ('VI.',   'Future Outlook: $339.8B Market, Technology Roadmap & Implications'),
+    ("VII.",  "Devil's Advocate: 5 Critical Structural Challenges"),
 ]
 toc_rows_en = ''.join(idx_row_en(n, t, i) for i,(n,t) in enumerate(toc_en))
 
@@ -310,7 +318,7 @@ save(4, sld(
         pp_b(rr('Apptronik: $350M Series A', sz=1100)) +
         pp_b(rr('China total: 744 deals, ¥73.5B', sz=1100)),
         pp(rr('Industry Status & 3 Key Debates', sz=1300, bold=True, color='1A3A6B')) +
-        pp_b(rr('Pathway: Sense→Perceive→Decide→Act — data vs. model weighting?', sz=1050)) +
+        pp_b(rr('Pathway (Sense→Perceive→Decide→Act): data vs. model weighting?', sz=1050)) +
         pp_b(rr('Body design: Specialized form vs. general-purpose form?', sz=1050)) +
         pp_b(rr('Data strategy: Real-world collection vs. simulation synthesis?', sz=1050)) +
         pp_e() +
@@ -326,7 +334,7 @@ save(4, sld(
 save(6, sld(
     z1('II. Technology Trends', '① Algorithm 4 Pathways') +
     z2('The LLM→VLM→VLA→World Model progression has rapidly enhanced cognition and decision-making in embodied AI; VLA papers quadrupled in one year to 1,700+ in 2025, confirming the surge.') +
-    z3('1. Algorithm Technology — Unconverged, Multi-Pathway Exploration') +
+    z3('1. Algorithm Technology: Unconverged, Multi-Pathway Exploration') +
     make_table(
         ['Pathway', 'Representative Models', 'Key Characteristics', 'Application Examples'],
         [
@@ -373,12 +381,12 @@ save(7, sld(
 # ─── SLIDE 8: II-③ VLA Evolution ────────────────────────────────
 save(8, sld(
     z1('II. Technology Trends', '③ VLA Evolution in Depth') +
-    z2('End-to-end VLA is evolving along two architectural tracks — "unified single-system" and "layered dual-system" — with multi-modal fusion and reinforcement learning as the core improvement directions.') +
+    z2('End-to-end VLA is evolving along two architectural tracks ("unified single-system" and "layered dual-system") with multi-modal fusion and reinforcement learning as the core improvement directions.') +
     z3('3. VLA Technology Evolution: Deep Analysis') +
     z4_2col(
         pp(rr('① Unified Single-System VLA', sz=1300, bold=True, color='1A3A6B')) +
         pp_b(rr('UniAct (Tsinghua): Heterogeneous-data universal action space; 4 control interfaces from only 100 demos', sz=1050)) +
-        pp_b(rr('MLA (Peking Univ.): Full multi-sensor fusion — image, point cloud, tactile, language', sz=1050)) +
+        pp_b(rr('MLA (Peking Univ.): Full multi-sensor fusion (image, point cloud, tactile, language)', sz=1050)) +
         pp_b(rr('GEN-0 (Generalist AI): Async time-step processing; rapid adaptation at 10B parameters', sz=1050)) +
         pp_e() +
         pp(rr('② Layered Dual-System', sz=1300, bold=True, color='1A3A6B')) +
@@ -403,7 +411,7 @@ save(8, sld(
 save(9, sld(
     z1('III. Products & Applications', '① Robot Products') +
     z2('Humanoid robots have emerged as the flagship carrier of embodied AI. China and the US compete across three strategic camps: full-stack, hardware-focused, and software-brain-first. Unitree R1 at ¥39,900 has lowered the price barrier significantly.') +
-    z3('1. Robots — The "Hottest" Embodied AI Carrier') +
+    z3('1. Robots: The "Hottest" Embodied AI Carrier') +
     make_table(
         ['Camp', 'Representative Companies / Products', 'Key Characteristics'],
         [
@@ -448,7 +456,7 @@ save(10, sld(
 # ─── SLIDE 11: IV Industry Ecosystem ────────────────────────────
 save(11, sld(
     z1('V. Industry Ecosystem', '352+ Companies · Supply Chain · Standardization') +
-    z2('The embodied AI industrial chain is growing across 4 blocks — industry applications, product services, technology services, and infrastructure. China alone has formed an ecosystem of 352+ companies worth ¥73.5B.') +
+    z2('The embodied AI industrial chain is growing across 4 blocks: industry applications, product services, technology services, and infrastructure. China alone has formed an ecosystem of 352+ companies worth ¥73.5B.') +
     z3('1. Ecosystem Status & Key Challenges') +
     z4_2col(
         pp(rr('■ Ecosystem Scale (China)', sz=1300, bold=True, color='1A3A6B')) +
@@ -476,7 +484,7 @@ save(11, sld(
 # ─── SLIDE 12: V Future Outlook ──────────────────────────────────
 save(12, sld(
     z1('VI. Future Outlook', '$339.8B Market · Tech Roadmap · Implications') +
-    z2('Embodied AI will advance along three directions: architectural reinvention, application deepening, and safety & ethics framework — forming a $339.8B market by 2030.') +
+    z2('Embodied AI will advance along three directions (architectural reinvention, application deepening, and a safety and ethics framework), forming a $339.8B market by 2030.') +
     z3('Three Development Directions') +
     z4(
         pp(rr('① Architectural Reinvention: "Stacked Function Modules" → "Multi-modal Cognitive Fusion"', sz=1300, bold=True, color='1A3A6B')) +
@@ -558,7 +566,7 @@ closing_xml = f'''<?xml version="1.0" encoding="utf-8"?>
       <p:txBody><a:bodyPr anchor="ctr" bIns="0" lIns="91440" rIns="91440" tIns="0" wrap="square"/>
         <a:lstStyle/>
         <a:p><a:pPr algn="ctr"><a:buNone/></a:pPr>
-          {rr('"Use it freely, share widely. Just remember — always credit the source."', sz=1300, color='888888')}
+          {rr('"Use it freely, share widely. Just remember: always credit the source."', sz=1300, color='888888')}
         <a:endParaRPr/></a:p>
       </p:txBody></p:sp>
   </p:spTree></p:cSld>

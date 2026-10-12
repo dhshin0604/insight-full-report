@@ -7,7 +7,7 @@
 | 캔버스 크기 | 900 × 1020 px |
 | 배경색 | #F0F4FA |
 | 렌더링 | cairosvg → PNG |
-| 한국어 폰트 | NanumGothic (fontconfig 등록 필요) |
+| 한국어 폰트 | NanumGothic (Linux 는 fontconfig 등록, Windows·macOS 는 기본 한글 글꼴로 대체) |
 | 영어 폰트 | Arial, Helvetica, sans-serif |
 | DOCX 이미지 삽입 크기 | width=540, height=612 pt |
 
@@ -16,16 +16,16 @@
 ## NanumGothic 폰트 설치 (한국어 차트용, 최초 1회)
 
 ```bash
-pip install cairosvg --break-system-packages 2>/dev/null
-mkdir -p ~/.fonts
-# NanumGothic.ttf가 없으면:
-# wget -q -O ~/.fonts/NanumGothic.ttf "https://github.com/naver/nanumfont/raw/master/NanumGothic.ttf"
+python3 -m pip install cairosvg koreanize-matplotlib   # 관리되는 Linux 환경이면 --break-system-packages
+# Linux : cairosvg 는 글꼴을 fontconfig 로 찾으므로 패키지에 든 NanumGothic(본문, 굵게)을 사용자 글꼴 폴더에 등록
+python3 -c "import importlib.util, os, glob, shutil; d = os.path.join(importlib.util.find_spec('koreanize_matplotlib').submodule_search_locations[0], 'fonts'); t = os.path.expanduser('~/.fonts'); os.makedirs(t, exist_ok=True); [shutil.copy(f, t) for f in glob.glob(os.path.join(d, 'NanumGothic*.ttf'))]"
 fc-cache -f ~/.fonts/ 2>/dev/null
+# Windows, macOS : 아래 font-family 의 기본 한글 글꼴(Malgun Gothic, Apple SD Gothic Neo)이 쓰임
 ```
 
 SVG CSS에서:
 ```xml
-<style>text { font-family: NanumGothic, Arial, sans-serif; }</style>
+<style>text { font-family: NanumGothic, 'Malgun Gothic', 'Apple SD Gothic Neo', Arial, sans-serif; }</style>
 ```
 
 ---
@@ -39,16 +39,16 @@ Y=72~94   : 핵심 메시지 헤더 (#1A3A6B)
 Y=100~180 : 핵심 메시지 3 박스 (나란히, 각 272×80)
 Y=180~202 : 점선 연결 화살표
 Y=204~224 : 플로우 헤더 (#37474F)
-Y=228~290 : Layer 0 — 핵심 모델/경제 (중앙 520×62, #0055B3)
+Y=228~290 : Layer 0: 핵심 모델/경제 (중앙 520×62, #0055B3)
 Y=290~310 : 연결 화살표
-Y=314~394 : Layer 1 — 기술 A (좌 396×80) + 기술 B (우 396×80) (#003F8A)
+Y=314~394 : Layer 1: 기술 A (좌 396×80) + 기술 B (우 396×80) (#003F8A)
 Y=344~360 : 중간 연결 박스 (~200×16, #0A2A5E)
 Y=394~414 : 연결 화살표
-Y=418~494 : Layer 2 — SW A (좌 396×76) + SW B (우 396×76) (#1A4D1A)
+Y=418~494 : Layer 2: SW A (좌 396×76) + SW B (우 396×76) (#1A4D1A)
 Y=494~518 : 연결 화살표
-Y=518~590 : Layer 3 — 확장 3분할 (각 270×72, #4A1A4A)
+Y=518~590 : Layer 3: 확장 3분할 (각 270×72, #4A1A4A)
 Y=590~614 : 연결 화살표
-Y=614~682 : Layer 4 — 인프라 A (좌 396×68) + B (우 396×68) (#3A2A00)
+Y=614~682 : Layer 4: 인프라 A (좌 396×68) + B (우 396×68) (#3A2A00)
 Y=682~706 : 연결 화살표
 Y=706~764 : 결론 박스 (80~820, 740×58, #B71C1C)
 Y=776~832 : Devil's Advocate (#FFFDE7, 테두리 #F9A825)
@@ -116,7 +116,7 @@ Y=936~1002: 하단 노트 (#ECEFF1)
 ```python
 import cairosvg
 
-# 한국어 (bytestring 방식 — NanumGothic 폰트 적용)
+# 한국어 (bytestring 방식: NanumGothic 폰트 적용)
 cairosvg.svg2png(
     bytestring=kr_svg.encode('utf-8'),
     write_to='workflow_chart_kr.png',

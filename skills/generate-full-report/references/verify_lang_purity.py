@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-verify_lang_purity.py — 산출물 본문 언어 정합성 검증
+verify_lang_purity.py: 산출물 본문 언어 정합성 검증
 ================================================================
 원문이 KR/EN이 아닌 자료(중국어 간체/번체, 일본어 등)에서 보고서를 생성할 때
 KR/EN 산출물 본문에 원문 문자가 그대로 남아 있는 드리프트를 잡아낸다.
@@ -44,6 +44,13 @@ import re
 import sys
 import zipfile
 import xml.etree.ElementTree as ET
+
+# Windows 의 cp949·cp1252 콘솔과 파이프에서도 출력 때문에 멈추지 않게 UTF-8 로 맞춤
+for _stdio in (sys.stdout, sys.stderr):
+    try:
+        _stdio.reconfigure(encoding='utf-8', errors='replace')
+    except (AttributeError, ValueError):
+        pass
 
 NS_A = '{http://schemas.openxmlformats.org/drawingml/2006/main}'
 NS_W = '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}'
@@ -186,7 +193,7 @@ def verify(text_items, target_lang: str, kr_max: int, en_max: int):
     if target_lang == 'kr':
         if total_hira > 0 or total_kata > 0:
             fail = True
-            reasons.append(f'KR 본문에 일본어 가나(hiragana={total_hira}, katakana={total_kata}) 잔존 — 0개 필요')
+            reasons.append(f'KR 본문에 일본어 가나(hiragana={total_hira}, katakana={total_kata}) 잔존: 0개 필요')
         if total_hanja > kr_max:
             fail = True
             reasons.append(f'KR 본문 한자(漢字) {total_hanja}개 > 허용치 {kr_max} (KR_HANJA_MAX)')
@@ -212,7 +219,7 @@ def render_report(target, target_lang, totals, reasons, flagged, fail):
         for r in reasons:
             print(f'  • {r}')
     else:
-        print('\n✅ VERIFY OK — 언어 정합성 통과')
+        print('\n✅ VERIFY OK: 언어 정합성 통과')
 
 
 def parse_args():

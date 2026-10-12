@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "_comment": "금지어·금지 문형 단일 사전. verify_content.py(generate-full-report)와 selfcheck.py(report-harness)가 같은 내용을 읽음. 두 사본은 scripts/selftest.sh 가 같은지 검사함. 팀 고유 금지어는 user_banned 에 추가.",
+  "hype_hard": {
+    "kr": ["혁명적", "혁명을", "압도적", "전무후무", "유일무이", "독보적", "궁극의", "궁극적", "세계 최초", "세계최초", "초유의", "미증유"],
+    "en": ["revolutionary", "unprecedented", "unparalleled", "world-first", "world first", "game-changing", "game changer", "paradigm shift", "paradigm-shift", "best-in-class", "second to none"]
+  },
+  "hype_soft": {
+    "kr": ["가장", "최고", "최고의", "근본적", "단연", "무한한", "완벽한", "완벽히"],
+    "en": ["ultimate", "cutting-edge", "state-of-the-art", "most advanced"]
+  },
+  "eval_terms": {
+    "_comment": "현황편(status) 모드에서만 금지. 분석·진단 문서에서는 허용.",
+    "kr": ["강점", "약점", "부족", "취약", "우수", "선도", "활발", "미흡", "유일한", "핵심적", "주목할", "눈에 띄", "시사점", "필요합니다", "필요가", "요구됩니다", "해야", "바람직"],
+    "en": ["strength", "weakness", "lagging", "leading", "should", "must", "need to"]
+  },
+  "ai_tone": {
+    "_comment": "AI가 쓴 티가 나는 문형. 경고 수준.",
+    "kr": ["핵심은", "결국", "이처럼", "라는 점에서", "흥미롭게도", "하는 것이 중요합니다", "살펴보겠습니다", "알아보겠습니다"],
+    "en": ["delve", "it is worth noting", "it's worth noting", "in today's fast-paced", "a testament to", "rich tapestry", "navigate the complexities"]
+  },
+  "pointer": {
+    "_comment": "장과 장을 잇는 예고·안내. 각 장은 자기 결론으로 끝냄.",
+    "kr": ["다음 장에서", "앞 장에서", "뒤에서 다룰", "앞에서 보았듯", "→ §", "(→"],
+    "en": ["in the next chapter", "as discussed above", "as we will see", "see chapter"]
+  },
+  "self_commentary": {
+    "kr": ["미리 말해두면", "미리 밝혀두면", "이 글은 결코"],
+    "en": ["to be clear, this is not"]
+  },
+  "user_banned": {
+    "_comment": "팀·필자 고유 금지 표현을 여기에 추가함.",
+    "kr": [],
+    "en": []
+  },
+  "bullets": ["•", "▪", "‣", "◦", "·", "●", "∙", "￭"],
+  "dash": {
+    "_comment": "줄표(U+2014). 영문은 오류, 한글은 경고.",
+    "chars": ["\u2014"],
+    "level": {"kr": "warn", "en": "error"}
+  }
+}

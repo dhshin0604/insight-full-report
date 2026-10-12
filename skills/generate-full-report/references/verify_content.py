@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-verify_content.py — 내용 품질 게이트 (deterministic content eValuation)
+verify_content.py: 내용 품질 게이트 (deterministic content eValuation)
 
 verify_toc.py 가 '구조(TOC ↔ 본문 챕터)'를 검사한다면, 이 스크립트는 '내용 품질'을
 LLM 없이 규칙 기반으로 채점한다. 결정론적으로 잡을 수 있는 위반만 본다.
@@ -9,12 +9,18 @@ LLM 없이 규칙 기반으로 채점한다. 결정론적으로 잡을 수 있�
 검사 항목 (SKILL.md ANTI-DRIFT / WRODING 프롬프팅에서 유래):
   [E] HYPE_HARD   과장 형용사(혁명적/압도적/유일무이 ...)            -> ERROR
   [W] HYPE_SOFT   완화 대상 형용사(가장/최고/근본적 ...)             -> WARNING(빈도)
-  [E] BULLET      Word 본문 bullet 문자(•▪‣ 등) — docx 전용          -> ERROR
+  [E] BULLET      Word 본문 bullet 문자(•▪‣ 등): docx 전용          -> ERROR
   [E] CJK_KR      한글문서 본문의 '괄호 밖' 독립 한자/가나 토큰        -> ERROR
   [W] CJK_EN      영문문서 본문의 pinyin 없는 단독 中文                -> WARNING
-  [W] KEYMSG      PPTX content 슬라이드에 KEY MESSAGE(임./음.) 부재    -> WARNING
+  [W] KEYMSG      PPTX content 슬라이드에 KEY MESSAGE(KR 명사형 종결 임./음./함. 등, EN 40자 이상 완결 문장) 부재 -> WARNING
   [W] SOURCE      문서 끝 출처/Source 섹션 부재                       -> WARNING
-  [E] HEADNUM     Word 챕터 헤딩 번호(1. / 1.1) 누락·순서 오류 — docx  -> ERROR (v0.9.1)
+  [E] HEADNUM     Word 챕터 헤딩 번호(1. / 1.1) 누락·순서 오류: docx  -> ERROR (v0.9.1)
+  [E/W] DASH      줄표(U+2014) : 영문 ERROR, 한글 WARNING (lexicon.json dash.level)  (v1.0)
+  [W] AI_TONE     AI가 쓴 티가 나는 문형(핵심은, 결국, 이처럼 ...)          -> WARNING (v1.0)
+  [W] POINTER     장과 장을 잇는 예고·안내(다음 장에서 ...)                 -> WARNING (v1.0)
+  [E] BANNED      lexicon.json user_banned (팀 고유 금지 표현)               -> ERROR (v1.0)
+
+금지어 목록은 같은 폴더의 lexicon.json 에서 읽음(없으면 아래 기본 목록). report-harness 의 selfcheck.py 와 같은 사전을 씀.
 
 입력(택1): --unpacked unpacked_kr/  |  --docx report.docx
 공통: --lang kr|en  --json gate_content.json  --judge-extract judge_in.json
@@ -22,6 +28,13 @@ LLM 없이 규칙 기반으로 채점한다. 결정론적으로 잡을 수 있�
 """
 import sys, os, re, json, zipfile, argparse
 import xml.etree.ElementTree as ET
+
+# Windows 의 cp949·cp1252 콘솔과 파이프에서도 출력 때문에 멈추지 않게 UTF-8 로 맞춤
+for _stdio in (sys.stdout, sys.stderr):
+    try:
+        _stdio.reconfigure(encoding='utf-8', errors='replace')
+    except (AttributeError, ValueError):
+        pass
 
 NS_A = '{http://schemas.openxmlformats.org/drawingml/2006/main}'
 NS_W = '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}'
@@ -35,23 +48,89 @@ HYPE_HARD_EN = ['revolutionary', 'unprecedented', 'unparalleled', 'world-first',
 HYPE_SOFT_EN = ['ultimate', 'cutting-edge', 'state-of-the-art', 'most advanced']
 
 BULLET_CHARS = ['•', '▪', '‣', '◦', '·', '●', '∙', '￭']
+
+# v1.0 : lexicon.json 이 있으면 그 값을 정본으로 씀 (없으면 위 기본 목록 유지)
+LEXICON = {}
+_lex_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'lexicon.json')
+if os.path.isfile(_lex_path):
+    try:
+        with open(_lex_path, encoding='utf-8') as _f:
+            LEXICON = json.load(_f)
+    except (OSError, ValueError) as _e:
+        sys.stderr.write('WARNING: lexicon.json 읽기 실패 (%s) : 기본 목록 사용\n' % _e)
+        LEXICON = {}
+
+
+def _lex(key, lang, default):
+    v = LEXICON.get(key, {})
+    if isinstance(v, dict):
+        v = v.get(lang)
+    return list(v) if isinstance(v, list) and v else list(default)
+
+
+if LEXICON:
+    HYPE_HARD_KR = _lex('hype_hard', 'kr', HYPE_HARD_KR)
+    HYPE_HARD_EN = _lex('hype_hard', 'en', HYPE_HARD_EN)
+    HYPE_SOFT_KR = _lex('hype_soft', 'kr', HYPE_SOFT_KR)
+    HYPE_SOFT_EN = _lex('hype_soft', 'en', HYPE_SOFT_EN)
+    if isinstance(LEXICON.get('bullets'), list) and LEXICON['bullets']:
+        BULLET_CHARS = list(LEXICON['bullets'])
+DASH_CHARS = (LEXICON.get('dash', {}) or {}).get('chars') or ['\u2014']
+DASH_LEVEL = (LEXICON.get('dash', {}) or {}).get('level') or {'kr': 'warn', 'en': 'error'}
+AI_TONE = {lg: _lex('ai_tone', lg, []) for lg in ('kr', 'en')}
+POINTER = {lg: _lex('pointer', lg, []) for lg in ('kr', 'en')}
+BANNED = {lg: _lex('user_banned', lg, []) for lg in ('kr', 'en')}
 CJK_RE = re.compile(r'[㐀-䶿一-鿿぀-ゟ゠-ヿ]+')
-KEYMSG_RE = re.compile(r'(임|음)\.\s*$')
+KEYMSG_RE = re.compile(r'([가-힣])\.\s*$')  # 명사형 종결 : 마지막 글자 받침이 ㅁ (임, 음, 함, 됨, 짐 ...)
+
+
+def _is_noun_ending(text):
+    m = KEYMSG_RE.search(text)
+    return bool(m) and (ord(m.group(1)) - 0xAC00) % 28 == 16
+KEYMSG_EN_RE = re.compile(r'[.!?]\s*$')   # 영문 KEY MESSAGE : 40자 이상의 완결 문장
 SOURCE_HINT = ['출처', 'source', 'sources', 'references', '참고문헌']
 
 
+def _ordered_slide_files(base):
+    """presentation.xml 의 sldIdLst(실제 보이는 순서)대로 슬라이드 파일 이름. 읽지 못하면 파일 번호 순."""
+    ppt = os.path.join(base, 'ppt')
+    try:
+        with open(os.path.join(ppt, 'presentation.xml'), encoding='utf-8') as f:
+            pres = f.read()
+        with open(os.path.join(ppt, '_rels', 'presentation.xml.rels'), encoding='utf-8') as f:
+            rels = f.read()
+        rmap = {}
+        for tag in re.findall(r'<Relationship\b[^>]*/>', rels):
+            i = re.search(r'\bId="([^"]+)"', tag)
+            t = re.search(r'\bTarget="([^"]+)"', tag)
+            if i and t:
+                rmap[i.group(1)] = os.path.basename(t.group(1))
+        lst = re.search(r'<p:sldIdLst>(.*?)</p:sldIdLst>', pres, re.S)
+        order = [rmap.get(r) for r in re.findall(r'<p:sldId\b[^>]*\br:id="([^"]+)"', lst.group(1))] if lst else []
+        order = [o for o in order if o]
+        if order:
+            return order
+    except OSError:
+        pass
+    d = os.path.join(ppt, 'slides')
+    return sorted((f for f in os.listdir(d) if re.match(r'slide\d+\.xml$', f)),
+                  key=lambda f: int(re.search(r'(\d+)', f).group(1)))
+
+
 def slides_from_unpacked(base):
-    d = os.path.join(base.rstrip('/'), 'ppt', 'slides')
+    """[(이름, [텍스트...]), ...] 를 보이는 순서대로. 이름은 'slide5' 처럼 파일 이름에서 .xml 을 뺀 것."""
+    base = base.rstrip('/\\')
+    d = os.path.join(base, 'ppt', 'slides')
     if not os.path.isdir(d):
         sys.stderr.write('ERROR: %s 없음\n' % d); sys.exit(2)
-    out = {}
-    for fn in os.listdir(d):
-        m = re.match(r'slide(\d+)\.xml$', fn)
-        if not m:
+    out = []
+    for fn in _ordered_slide_files(base):
+        path = os.path.join(d, fn)
+        if not os.path.isfile(path):
             continue
-        root = ET.parse(os.path.join(d, fn)).getroot()
-        out[int(m.group(1))] = [(t.text or '') for t in root.iter('%st' % NS_A)]
-    return dict(sorted(out.items()))
+        root = ET.parse(path).getroot()
+        out.append((fn[:-4], [(t.text or '') for t in root.iter('%st' % NS_A)]))
+    return out
 
 
 def runs_from_docx(path):
@@ -89,7 +168,7 @@ def headings_from_docx(path):
 
 
 def check_docx_headings(path, errors, warnings):
-    """v0.9.1: 챕터 헤딩 번호 체계(1. / 1.1) 검사 — H1C/H2C 드리프트 게이트."""
+    """v0.9.1: 챕터 헤딩 번호 체계(1. / 1.1) 검사: H1C/H2C 드리프트 게이트."""
     heads = headings_from_docx(path)
     h1_nums, cur_h1 = [], None
     for style, txt in heads:
@@ -104,7 +183,7 @@ def check_docx_headings(path, errors, warnings):
                 if not exempt:
                     errors.append({'type': 'HEADNUM', 'loc': 'H1:%s' % txt[:30],
                                    'detail': '챕터 H1 번호 없음',
-                                   'fix': "H1C() 헬퍼 사용 — '1. %s' 형태로 자동 번호" % txt[:20]})
+                                   'fix': "H1C() 헬퍼 사용: '1. %s' 형태로 자동 번호" % txt[:20]})
         else:  # Heading2
             m = H2_NUM_RE.match(txt)
             if m:
@@ -112,11 +191,11 @@ def check_docx_headings(path, errors, warnings):
                     errors.append({'type': 'HEADNUM', 'loc': 'H2:%s' % txt[:30],
                                    'detail': '소제목 번호 %s.%s 가 챕터 %s 와 불일치'
                                              % (m.group(1), m.group(2), cur_h1),
-                                   'fix': 'H2C() 헬퍼 사용 — 챕터 카운터와 자동 동기화'})
+                                   'fix': 'H2C() 헬퍼 사용: 챕터 카운터와 자동 동기화'})
             elif cur_h1 is not None and not exempt:
                 errors.append({'type': 'HEADNUM', 'loc': 'H2:%s' % txt[:30],
                                'detail': '소제목 H2 번호(%d.x) 없음' % cur_h1,
-                               'fix': "H2C() 헬퍼 사용 — '%d.1 %s' 형태" % (cur_h1, txt[:20])})
+                               'fix': "H2C() 헬퍼 사용: '%d.1 %s' 형태" % (cur_h1, txt[:20])})
     if len(heads) >= 4 and not h1_nums:
         errors.append({'type': 'HEADNUM', 'loc': 'docx', 'detail': '번호 달린 챕터 H1 이 0개',
                        'fix': '본문 챕터 전부 H1C()/H2C() 로 작성 (build 템플릿 헬퍼)'})
@@ -149,13 +228,34 @@ def check_texts(loc, texts, lang, errors, warnings, kind):
         n = joined.count(w) if lang == 'kr' else low.count(w.lower())
         if n:
             warnings.append({'type': 'HYPE_SOFT', 'loc': loc, 'detail': '%s x%d' % (w, n),
-                             'fix': '"%s" %d회 — 필요한 곳만 남기고 축소' % (w, n)})
+                             'fix': '"%s" %d회: 필요한 곳만 남기고 축소' % (w, n)})
 
     if kind == 'docx':
         for ch in BULLET_CHARS:
             if ch in joined:
                 errors.append({'type': 'BULLET', 'loc': loc, 'detail': ch,
                                'fix': 'Word 본문 bullet "%s" 제거 -> 산문 3~4 단락' % ch})
+
+    # v1.0 : 줄표, AI 티 문형, 장 사이 가리킴, 팀 금지 표현
+    n_dash = sum(joined.count(ch) for ch in DASH_CHARS)
+    if n_dash:
+        item = {'type': 'DASH', 'loc': loc, 'detail': '줄표(U+2014) x%d' % n_dash,
+                'fix': '줄표 대신 콜론, 쉼표, 괄호로 바꿈'}
+        (errors if DASH_LEVEL.get(lang, 'warn') == 'error' else warnings).append(item)
+    for w in AI_TONE.get(lang, []):
+        n = joined.count(w) if lang == 'kr' else low.count(w.lower())
+        if n:
+            warnings.append({'type': 'AI_TONE', 'loc': loc, 'detail': '"%s" x%d' % (w, n),
+                             'fix': '"%s" 를 빼고 내용으로 바로 말함' % w})
+    for w in POINTER.get(lang, []):
+        n = joined.count(w) if lang == 'kr' else low.count(w.lower())
+        if n:
+            warnings.append({'type': 'POINTER', 'loc': loc, 'detail': '"%s" x%d' % (w, n),
+                             'fix': '장 사이 예고·안내를 빼고 각 장을 자기 결론으로 끝냄'})
+    for w in BANNED.get(lang, []):
+        if (w in joined) or (lang == 'en' and w.lower() in low):
+            errors.append({'type': 'BANNED', 'loc': loc, 'detail': w,
+                           'fix': 'lexicon.json user_banned 표현 "%s" 를 바꿈' % w})
 
     if lang == 'kr':
         for t in texts:
@@ -176,17 +276,22 @@ def run(args):
 
     if args.unpacked:
         slides = slides_from_unpacked(args.unpacked)
-        last = max(slides) if slides else 0
-        for n, texts in slides.items():
-            judge_dump['slide%d' % n] = texts
-            kind = 'pptx_meta' if n <= 2 or n == last else 'pptx_body'
-            check_texts('slide%d' % n, texts, args.lang, errors, warnings, kind)
+        n_sl = len(slides)
+        for i, (name, texts) in enumerate(slides):
+            judge_dump[name] = texts
+            # 보이는 순서로 표지(1)·INDEX(2)·맺음말(마지막)은 메타, 나머지는 본문
+            kind = 'pptx_meta' if i < 2 or i == n_sl - 1 else 'pptx_body'
+            check_texts(name, texts, args.lang, errors, warnings, kind)
             if kind == 'pptx_body':
-                if not any(KEYMSG_RE.search(t.strip()) for t in texts):
-                    warnings.append({'type': 'KEYMSG', 'loc': 'slide%d' % n,
+                if args.lang == 'en':
+                    has_key = any(len(t.strip()) >= 40 and KEYMSG_EN_RE.search(t.strip()) for t in texts)
+                else:
+                    has_key = any(_is_noun_ending(t.strip()) for t in texts)
+                if not has_key:
+                    warnings.append({'type': 'KEYMSG', 'loc': name,
                                      'detail': 'KEY MESSAGE 없음',
                                      'fix': 'Zone2에 ~임./~음. 완결 통찰문 1줄 추가'})
-        tail = ' '.join(slides.get(last, []) + slides.get(last - 1, [])).lower()
+        tail = ' '.join(sum((t for _, t in slides[-2:]), [])).lower()
         if not any(h in tail for h in SOURCE_HINT):
             warnings.append({'type': 'SOURCE', 'loc': 'pptx-tail', 'detail': 'Source 미검출',
                              'fix': '본문 Zone5/말미에 출처 표기 확인'})

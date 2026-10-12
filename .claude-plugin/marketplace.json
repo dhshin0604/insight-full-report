@@ -1,0 +1,15 @@
+{
+  "name": "wroding",
+  "description": "신동형 인사이트(WRODING) 보고서 플러그인 마켓플레이스",
+  "owner": {
+    "name": "DH Shin (신동형)",
+    "url": "https://github.com/dhshin0604"
+  },
+  "plugins": [
+    {
+      "name": "insight-full-report",
+      "source": ".",
+      "description": "4종 문서 생성기, 이미지 슬라이드 덱, 보고서 하네스, 품질 코어를 담은 보고서 플러그인"
+    }
+  ]
+}

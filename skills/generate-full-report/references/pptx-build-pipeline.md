@@ -1,6 +1,6 @@
 # PPTX 빌드 파이프라인 v0.4 (Build Pipeline)
 
-## ★ CRITICAL BUG FIX — 반드시 준수
+## ★ CRITICAL BUG FIX: 반드시 준수
 
 ### ⓪ Google Slides 잔존물 제거 (v0.4 신규, PowerPoint "읽을 수 없습니다" 원인 #2)
 
@@ -13,19 +13,20 @@
 
 **증상**: LibreOffice / python-pptx / `unzip -t` 모두 통과하는데 Microsoft PowerPoint만 "읽을 수 없습니다" 에러.
 
-**해결**: `pack.py` 호출 **직전**에 반드시:
+**해결**: `ooxml_tools.py pack` 호출 **직전**에 반드시 (`build_pptx.sh` 가 8단계에서 자동으로 실행함):
 
 ```bash
 python3 references/strip_google_extensions.py --unpacked unpacked_kr/
 python3 references/strip_google_extensions.py --unpacked unpacked_en/
 ```
 
-이 단계는 `clean.py` 다음, `pack.py` 이전이어야 합니다.
+이 단계는 `ooxml_tools.py clean` 다음, `ooxml_tools.py pack` 이전이어야 합니다.
 
 **검증**:
 ```bash
-unzip -p final.pptx ppt/presentation.xml | grep -c 'customooxmlschemas.google\|customschemas.google'
-# 반드시 0 이어야 함
+python3 references/ooxml_tools.py check final.pptx
+python3 -c "import zipfile,sys; s=zipfile.ZipFile(sys.argv[1]).read('ppt/presentation.xml').decode(); print(s.count('customschemas.google')+s.count('customooxmlschemas.google'))" final.pptx
+# 두 번째 줄 결과는 반드시 0 (build_pptx.sh 10단계가 같은 검사를 함)
 ```
 
 ---
@@ -36,11 +37,11 @@ Zone 헬퍼의 `<p:nvPr>` 안에 `<p:ph .../>` 를 넣으면, 한 슬라이드�
 여러 개 선언되어 PowerPoint가 OOXML 검증 실패로 파일 자체를 거부합니다.
 
 ```python
-# ❌ 절대 금지 — 파일 손상 (PowerPoint 열기 오류)
+# ❌ 절대 금지: 파일 손상 (PowerPoint 열기 오류)
 <p:nvPr><p:ph type="title"/></p:nvPr>
 <p:nvPr><p:ph idx="3" type="title"/></p:nvPr>
 
-# ✅ 올바름 — 빈 nvPr 사용 (순수 텍스트 박스)
+# ✅ 올바름: 빈 nvPr 사용 (순수 텍스트 박스)
 <p:nvPr/>
 ```
 
@@ -50,7 +51,7 @@ slideLayout5의 `defRPr`에 `u="sng"`가 있어 모든 텍스트가 밑줄을 �
 `u="none"`을 명시하지 않으면 Zone 3 소주제에 원하지 않는 밑줄이 생깁니다.
 
 ```python
-# ✅ 올바른 rr() — u='none' 기본값
+# ✅ 올바른 rr(): u='none' 기본값
 def rr(text, sz=None, bold=False, color=None, lang='ko', u='none'):
     sz_a = f' sz="{sz}"' if sz else ''
     b_a  = ' b="1"' if bold else ''
@@ -63,41 +64,23 @@ def rr(text, sz=None, bold=False, color=None, lang='ko', u='none'):
 
 ## 빌드 절차 개요
 
-> 정본 절차는 `build_pptx.sh` 한 줄입니다. 아래는 오케스트레이터가 내부에서 하는 일을 손으로 재현할 때의 참고용이며, **v0.9.3 부터 Anthropic pptx 스킬 2026-10 판 기준**입니다 (`scripts/office/unpack.py`·`pack.py` 는 더 이상 없고, `add_slide.py` 가 `<p:sldIdLst>` 등록까지 수행).
+빌드는 `build_pptx.sh` 한 줄로 끝냄. 아래는 그 안에서 일어나는 일이며, 모든 OOXML 조작은 같은 폴더의 `ooxml_tools.py`(표준 라이브러리만 사용)가 맡음. 외부 pptx 스킬은 필요 없음.
 
 ```bash
-# STEP 0 — 경로 탐색 (build_pptx.sh 가 같은 순서로 자동 수행)
-for c in /mnt/skills/public/pptx "$HOME"/.claude/skills/synced/*/pptx; do
-  [ -f "$c/scripts/add_slide.py" ] && PPTX_SKILL="$c" && break
-done
-TEMPLATE=references/TEMPLATE.pptx
-echo "PPTX_SKILL=$PPTX_SKILL  TEMPLATE=$TEMPLATE"
-
-# 1. 템플릿 언팩 (구판 스킬이면 scripts/office/unpack.py, 신판은 zipfile)
-python3 -c "import sys,zipfile; zipfile.ZipFile(sys.argv[1]).extractall(sys.argv[2])" "$TEMPLATE" unpacked_kr/
-
-# 2. 본문 슬라이드 추가 (한 장씩 N 회 — 신판 add_slide.py 는 sldIdLst 까지 등록함)
-for i in $(seq 1 {N}); do python3 "$PPTX_SKILL/scripts/add_slide.py" unpacked_kr/ slideLayout5.xml; done
-
-# 3. 레이아웃 rels 설정 (슬라이드 종류별) + 맺음말(slide5 = rId10)을 sldIdLst 마지막으로 이동
-#   slideLayout1 = cover
-#   slideLayout2 = 맺음말(Closing)
-#   slideLayout3 = 챕터 구분 슬라이드
-#   slideLayout4 = INDEX
-#   slideLayout5 = default_contents (★ 본문 슬라이드)
-
-# 4. Python으로 슬라이드 XML 생성 및 저장
-TARGET_UNPACKED=unpacked_kr python3 build_pptx_kr.py
-
-# 5. 클린업 · Google 잔존물 제거 · 패키징 ([Content_Types].xml 을 첫 항목으로)
-python3 "$PPTX_SKILL/scripts/clean.py" unpacked_kr/
-python3 references/strip_google_extensions.py --unpacked unpacked_kr/
-(cd unpacked_kr && rm -f ../Output_KR.pptx && zip -X -q ../Output_KR.pptx '[Content_Types].xml' && zip -X -q -r ../Output_KR.pptx . -x '[Content_Types].xml')
-
-# 6. 검증 (템플릿 고유 오류는 --original 로 제외)
-python3 "$PPTX_SKILL/scripts/office/validate.py" Output_KR.pptx --original "$TEMPLATE"
-unzip -t Output_KR.pptx | tail -3
+bash references/build_pptx.sh kr build_pptx_kr.py Output_KR.pptx
+#   1. ooxml_tools.py unpack TEMPLATE.pptx unpacked_kr
+#   2. ooxml_tools.py add-slides unpacked_kr slideLayout5.xml $N_CONTENT
+#   3. ooxml_tools.py move-last unpacked_kr slide5.xml        (맺음말을 맨 끝으로)
+#   4. ooxml_tools.py set-layout unpacked_kr slide3.xml slideLayout5.xml
+#   5. TARGET_UNPACKED=unpacked_kr python3 build_pptx_kr.py   (슬라이드 XML 작성)
+#   6. apply_profile.py, verify_toc.py
+#   7. ooxml_tools.py clean, strip_google_extensions.py, ooxml_tools.py pack, ooxml_tools.py check
+#   8. (선택) pptx 스킬의 scripts/office/validate.py OUT.pptx --original TEMPLATE.pptx  (있을 때만, SKIP_VALIDATE=1 로 끔)
 ```
+
+> v0.9.3 은 Anthropic pptx 스킬 2026-10 판(unpack.py·pack.py 제거) 호환을 위해 unpack/pack 을 내장했고, v1.0 은 슬라이드 추가·정리까지 `ooxml_tools.py` 로 옮겨 pptx 스킬 없이도 빌드됨. pptx 스킬이 있으면 그 validate.py 만 마지막 검증에 씀
+
+레이아웃 : slideLayout1 = 표지, slideLayout2 = 맺음말, slideLayout3 = 챕터 간지, slideLayout4 = INDEX, slideLayout5 = 본문(default_contents)
 
 ---
 
@@ -163,7 +146,7 @@ def sld_wrap(spTree):
 
 ```python
 def zone_hdr(left_text, right_text, lang='ko'):
-    """Zone 1 — 섹션 헤더. ⚠️ ph 없음, nvPr 빈 값"""
+    """Zone 1: 섹션 헤더. ⚠️ ph 없음, nvPr 빈 값"""
     return (
         f'    <p:sp><p:nvSpPr><p:cNvPr id="10" name="zone1L"/>'
         f'<p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr>'
@@ -188,7 +171,7 @@ def zone_hdr(left_text, right_text, lang='ko'):
     )
 
 def zone_keymsg(msg, lang='ko'):
-    """Zone 2 — KEY MESSAGE. ⚠️ ph 없음, nvPr 빈 값"""
+    """Zone 2: KEY MESSAGE. ⚠️ ph 없음, nvPr 빈 값"""
     return (
         f'    <p:sp><p:nvSpPr><p:cNvPr id="12" name="zone2_keymsg"/>'
         f'<p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr>'
@@ -203,8 +186,8 @@ def zone_keymsg(msg, lang='ko'):
     )
 
 def zone_subhd(heading, lang='ko'):
-    """Zone 3 — 소주제 제목. 중앙정렬, navy bold, 밑줄(u=sng), fill 없음.
-    ⚠️ ph 없음, solidFill 배경 금지, 별도 밑줄 사각형 추가."""
+    """Zone 3: 소주제 제목. 중앙정렬, navy bold, 글자 밑줄(u=sng), fill 없음 (정본 템플릿의 z3 와 같음).
+    ⚠️ ph 없음, solidFill 배경 금지."""
     return (
         f'    <p:sp><p:nvSpPr><p:cNvPr id="13" name="zone3_subhd"/>'
         f'<p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr>'
@@ -215,18 +198,11 @@ def zone_subhd(heading, lang='ko'):
         f'<a:p><a:pPr algn="ctr"><a:spcBef><a:spcPts val="0"/></a:spcBef>'
         f'<a:spcAft><a:spcPts val="0"/></a:spcAft><a:buNone/></a:pPr>'
         f'{rr(heading, sz=1600, bold=True, color="1A3A6B", lang=lang, u="sng")}<a:endParaRPr/></a:p>'
-        f'</p:txBody></p:sp>\n'
-        f'    <p:sp><p:nvSpPr><p:cNvPr id="130" name="zone3_underline"/>'
-        f'<p:cNvSpPr/><p:nvPr/></p:nvSpPr>'
-        f'<p:spPr><a:xfrm><a:off x="162800" y="1773900"/><a:ext cx="8818500" cy="25400"/></a:xfrm>'
-        f'<a:prstGeom prst="rect"><a:avLst/></a:prstGeom>'
-        f'<a:solidFill><a:srgbClr val="1A3A6B"/></a:solidFill>'
-        f'<a:ln><a:noFill/></a:ln></p:spPr>'
-        f'<p:txBody><a:bodyPr/><a:lstStyle/></p:txBody></p:sp>'
+        f'</p:txBody></p:sp>'
     )
 
 def zone_body(paragraphs_xml, top=1850000, height=2780000, lang='ko'):
-    """Zone 4 — 단일 본문. ⚠️ ph 없음"""
+    """Zone 4: 단일 본문. ⚠️ ph 없음"""
     return (
         f'    <p:sp><p:nvSpPr><p:cNvPr id="14" name="zone4_body"/>'
         f'<p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr>'
@@ -239,7 +215,7 @@ def zone_body(paragraphs_xml, top=1850000, height=2780000, lang='ko'):
     )
 
 def zone_body2col(left_xml, right_xml, top=1850000, lang='ko'):
-    """Zone 4 — 2단 분할. ⚠️ ph 없음"""
+    """Zone 4: 2단 분할. ⚠️ ph 없음"""
     return (
         f'    <p:sp><p:nvSpPr><p:cNvPr id="14" name="zone4_left"/>'
         f'<p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr>'
@@ -256,7 +232,7 @@ def zone_body2col(left_xml, right_xml, top=1850000, lang='ko'):
     )
 
 def zone_src(src, lang='ko'):
-    """Zone 5 — Source 출처. ⚠️ ph 없음"""
+    """Zone 5: Source 출처. ⚠️ ph 없음"""
     prefix = '※ Source : ' if lang == 'ko' else 'Source: '
     return (
         f'    <p:sp><p:nvSpPr><p:cNvPr id="99" name="zone5_src"/>'
@@ -297,11 +273,12 @@ def save_slide(n, xml):
     with open(os.path.join(SLIDES_DIR, f'slide{n}.xml'), 'w', encoding='utf-8') as f:
         f.write(xml)
 
-# 예시: 본문 슬라이드
+# 예시: 본문 슬라이드. zone_hdr 왼쪽은 반드시 「로마숫자. 챕터명」 (verify_toc 가 INDEX 와 1:1 로 대조함)
+# 정본 템플릿(build_pptx_kr.template.py)에는 같은 역할의 함수가 sld, z1~z5, pp_b, save 이름으로 들어 있음
 save_slide(3, sld_wrap(
-    zone_hdr('Chapter I. 개요 및 배경', 'I-1', lang='ko') +
+    zone_hdr('I. 개요 및 배경', '① 연구 배경', lang='ko') +
     zone_keymsg('구현 AI는 물리 세계 AI의 임계점에 도달하고 있음.', lang='ko') +
-    zone_subhd('1.1 연구 배경', lang='ko') +
+    zone_subhd('1. 연구 배경', lang='ko') +
     zone_body(
         pp(rr('배경 텍스트', sz=1200, lang='ko')) +
         pp_bullet(rr('핵심 사실 1', sz=1100, lang='ko')),
@@ -353,9 +330,8 @@ def make_cover(title, subtitle, date, author, lang='ko'):
 
 ## 결과물 저장 경로
 
+저장 폴더는 SKILL.md Phase 0 에서 정한 `$WORKSPACE` 를 씀. 출력 파일 이름을 처음부터 `$WORKSPACE/...` 로 주면 복사가 필요 없음.
+
 ```bash
-WORKSPACE=$(find /sessions -maxdepth 4 -type d -name "ClaudeCoworkFile" 2>/dev/null | head -1)
-echo "WORKSPACE=$WORKSPACE"
-cp {주제}_KR_Presentation_{날짜}.pptx "$WORKSPACE/"
-cp {주제}_EN_Presentation_{날짜}.pptx "$WORKSPACE/"
+bash references/build_pptx.sh kr build_pptx_kr.py "$WORKSPACE/{주제}_KR_Presentation_{날짜}.pptx"
 ```

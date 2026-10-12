@@ -63,19 +63,23 @@ def rr(text, sz=None, bold=False, color=None, lang='ko', u='none'):
 
 ## 빌드 절차 개요
 
+> 정본 절차는 `build_pptx.sh` 한 줄입니다. 아래는 오케스트레이터가 내부에서 하는 일을 손으로 재현할 때의 참고용이며, **v0.9.3 부터 Anthropic pptx 스킬 2026-10 판 기준**입니다 (`scripts/office/unpack.py`·`pack.py` 는 더 이상 없고, `add_slide.py` 가 `<p:sldIdLst>` 등록까지 수행).
+
 ```bash
-# STEP 0 — 경로 동적 탐색 (반드시 먼저 실행, 세션마다 경로 달라짐)
-PPTX_SKILL=$(find /sessions -maxdepth 5 -name "pptx" -type d -path "*/skills/*" 2>/dev/null | head -1)
-TEMPLATE=$(find /sessions -maxdepth 6 -name "TEMPLATE*.pptx" 2>/dev/null | head -1)
+# STEP 0 — 경로 탐색 (build_pptx.sh 가 같은 순서로 자동 수행)
+for c in /mnt/skills/public/pptx "$HOME"/.claude/skills/synced/*/pptx; do
+  [ -f "$c/scripts/add_slide.py" ] && PPTX_SKILL="$c" && break
+done
+TEMPLATE=references/TEMPLATE.pptx
 echo "PPTX_SKILL=$PPTX_SKILL  TEMPLATE=$TEMPLATE"
 
-# 1. 템플릿 언팩
-python3 "$PPTX_SKILL/scripts/office/unpack.py" "$TEMPLATE" unpacked_kr/
+# 1. 템플릿 언팩 (구판 스킬이면 scripts/office/unpack.py, 신판은 zipfile)
+python3 -c "import sys,zipfile; zipfile.ZipFile(sys.argv[1]).extractall(sys.argv[2])" "$TEMPLATE" unpacked_kr/
 
-# 2. 슬라이드 추가 등록
-python3 "$PPTX_SKILL/scripts/add_slide.py" unpacked_kr/ --count {N}
+# 2. 본문 슬라이드 추가 (한 장씩 N 회 — 신판 add_slide.py 는 sldIdLst 까지 등록함)
+for i in $(seq 1 {N}); do python3 "$PPTX_SKILL/scripts/add_slide.py" unpacked_kr/ slideLayout5.xml; done
 
-# 3. 레이아웃 rels 설정 (슬라이드 종류별)
+# 3. 레이아웃 rels 설정 (슬라이드 종류별) + 맺음말(slide5 = rId10)을 sldIdLst 마지막으로 이동
 #   slideLayout1 = cover
 #   slideLayout2 = 맺음말(Closing)
 #   slideLayout3 = 챕터 구분 슬라이드
@@ -83,13 +87,15 @@ python3 "$PPTX_SKILL/scripts/add_slide.py" unpacked_kr/ --count {N}
 #   slideLayout5 = default_contents (★ 본문 슬라이드)
 
 # 4. Python으로 슬라이드 XML 생성 및 저장
-python3 build_slides.py
+TARGET_UNPACKED=unpacked_kr python3 build_pptx_kr.py
 
-# 5. 클린업 및 패키징
+# 5. 클린업 · Google 잔존물 제거 · 패키징 ([Content_Types].xml 을 첫 항목으로)
 python3 "$PPTX_SKILL/scripts/clean.py" unpacked_kr/
-python3 "$PPTX_SKILL/scripts/office/pack.py" unpacked_kr/ Output_KR.pptx --original "$TEMPLATE"
+python3 references/strip_google_extensions.py --unpacked unpacked_kr/
+(cd unpacked_kr && rm -f ../Output_KR.pptx && zip -X -q ../Output_KR.pptx '[Content_Types].xml' && zip -X -q -r ../Output_KR.pptx . -x '[Content_Types].xml')
 
-# 6. 검증
+# 6. 검증 (템플릿 고유 오류는 --original 로 제외)
+python3 "$PPTX_SKILL/scripts/office/validate.py" Output_KR.pptx --original "$TEMPLATE"
 unzip -t Output_KR.pptx | tail -3
 ```
 

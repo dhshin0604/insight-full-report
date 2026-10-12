@@ -9,6 +9,14 @@
 """
 import os
 
+import sys
+# Windows 의 cp949·cp1252 콘솔과 파이프에서도 출력 때문에 멈추지 않게 UTF-8 로 맞춤
+for _stdio in (sys.stdout, sys.stderr):
+    try:
+        _stdio.reconfigure(encoding='utf-8', errors='replace')
+    except (AttributeError, ValueError):
+        pass
+
 TARGET = os.environ.get('TARGET_UNPACKED', 'unpacked_kr')
 SLIDES = f'{TARGET}/ppt/slides'
 
@@ -290,7 +298,7 @@ save(2, sld(f'''
 save(3, sld(
     z1('I. 전체 현황', '① 개념과 특징') +
     z2('구현 AI는 "AI+로봇"의 단순 결합을 넘어 물리 본체-지능-환경 상호작용의 완전 폐루프를 구현하는 새로운 기술 패러다임임.') +
-    z3('1. 구현 AI의 개념과 내함') +
+    z3('1. 구현 AI의 개념과 의미') +
     z4(
         pp(rr('■ ITU-T F.748.66 정의', sz=1300, bold=True, color='1A3A6B')) +
         pp(rr('"물리 실체와 융합해 자율적으로 물리 세계와 상호작용하고 환경에 적응하는 AI"', sz=1100, color='0055B3')) +

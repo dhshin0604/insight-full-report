@@ -26,6 +26,13 @@ import struct
 import sys
 import zipfile
 
+# Windows 의 cp949·cp1252 콘솔과 파이프에서도 출력 때문에 멈추지 않게 UTF-8 로 맞춤
+for _stdio in (sys.stdout, sys.stderr):
+    try:
+        _stdio.reconfigure(encoding='utf-8', errors='replace')
+    except (AttributeError, ValueError):
+        pass
+
 __version__ = "1.0.0"
 PAGE_W_IN, PAGE_H_IN = 13.333, 7.5
 PPTX_W_EMU, PPTX_H_EMU = 12192000, 6858000   # 13.333 x 7.5 in

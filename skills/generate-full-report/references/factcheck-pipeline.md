@@ -108,7 +108,7 @@ python3 references/verify_claims.py --claims claims.json --unpacked unpacked_kr 
 ```
 
 검사 항목:
-- [E] `NUM_UNREG`: 본문 유의미 수치가 ledger에 미등록 (연도 단독·전화번호·슬라이드 좌표 제외)
+- [E] `NUM_UNREG`: 본문 유의미 수치가 ledger에 미등록 (연도 단독, 전화번호, 12 이하 정수, Word 헤딩의 장·절 번호, 캡션·질문 번호, 날짜는 제외 : v1.0)
 - [E] `REMOVED_LEAK`: status=removed claim 텍스트가 본문에 잔존
 - [E] `EST_UNMARKED`: estimate claim 수치가 본문에 `추정`/`est.` 표기 없이 등장
 - [W] `NO_URL`: verified claim에 url/source 부재

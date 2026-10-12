@@ -135,6 +135,8 @@ const pngSize = (b) => (b.length > 24 && b.readUInt32BE(12) === 0x49484452) ? { 
 
 
 const doc = new Document({
+  creator: '{AUTHOR_EN}',          // 문서 속성의 작성자 : apply_profile.py 가 프로필 값으로 바꿈
+  lastModifiedBy: '{AUTHOR_EN}',
   styles: {
     default: {
       heading1: {
@@ -261,7 +263,7 @@ const doc = new Document({
       // PAGE 3: Chapter I
       // ══════════════════════════════════════════════════════════
       H1C('전체 현황: 글로벌 구현 AI 총체적 발전'),
-      H2C('개념과 내함의 명확화: "몸을 가진 AI"의 등장'),
+      H2C('개념과 의미의 명확화: "몸을 가진 AI"의 등장'),
       textBox('KEY MESSAGE', [
         P(N('구현 AI는 "AI+로봇"의 단순 결합이 아니라, 물리 본체를 통해 인지-결정-행동의 완전 폐루프를 구현하는 새로운 기술 패러다임입니다. 인간이 두뇌와 몸이 함께 있어야 세상과 상호작용하듯, AI도 물리적 실체와 결합해야 비로소 현실 세계에서 가치를 만들어냅니다.')),
       ]),

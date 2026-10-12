@@ -22,6 +22,13 @@ import sys
 import zipfile
 import xml.etree.ElementTree as ET
 
+# Windows 의 cp949·cp1252 콘솔과 파이프에서도 출력 때문에 멈추지 않게 UTF-8 로 맞춤
+for _stdio in (sys.stdout, sys.stderr):
+    try:
+        _stdio.reconfigure(encoding='utf-8', errors='replace')
+    except (AttributeError, ValueError):
+        pass
+
 NS_REL = 'http://schemas.openxmlformats.org/package/2006/relationships'
 T_SLIDE = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide'
 T_LAYOUT = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout'

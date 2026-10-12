@@ -41,6 +41,20 @@
 - 확인 명령을 OS 와 무관하게 : `unzip -t` 대신 `python3 -m zipfile -t`, `ooxml_tools.py check`
 - 배포 파일 전체에서 줄표(U+2014)를 뺌. 배너를 v1.0 으로
 
+### 고침 (Fixed, 독립 검증에서 찾은 것)
+
+- **게이트가 돌지 못하면 통과로 치던 문제** : `gate_report.py` 가 대상 파일이 없거나(종료코드 2), 하위 게이트가 리포트를 못 내거나, `claims.json`·judge 결과 형식이 틀리면 `GATE_ERROR` 로 실패 처리
+- **Windows(cp949, cp1252)에서 출력 때문에 스크립트가 멈추던 문제** : 모든 파이썬 스크립트가 표준 출력을 UTF-8 로 맞추고, `build_pptx.sh`·`build_pptx_checked.sh` 가 `PYTHONUTF8=1` 을 설정하고, `gate_report.py` 가 하위 출력을 UTF-8 로 읽음. 예전에는 이 환경에서 내용 게이트가 멈추면 「건너뜀」으로 통과 처리될 수 있었음
+- **슬라이드 순서** : `verify_toc.py`, `verify_content.py` 가 파일 번호가 아니라 실제 보이는 순서(`sldIdLst`)로 검사. `N_CONTENT` 가 빌드 스크립트와 다르면 「빈 슬라이드」 또는 「슬라이드 목록에 없는 본문」으로 빌드를 멈춤(예전에는 챕터가 빠진 덱이 통과할 수 있었음)
+- **KEY MESSAGE 경고** : 한글은 명사형 종결(임, 음, 함, 됨 등) 전체를, 영문은 40자 이상 완결 문장을 인정. 맺음말 슬라이드에 잘못 붙던 경고를 없앰
+- **원장 대조의 구조 숫자** : `verify_claims.py` 가 Word 헤딩의 장·절 번호(1.1), 캡션·질문 번호([표 3], Q1.), 날짜(2026.04.08, 2026년 10월 12일)를 수치로 보지 않음. 위치를 문단 번호(`docx:p12`)로 알려 줌
+- `build_pptx_checked.sh` 가 `PYTHON` 환경변수를 따름(`python3` 이 없는 Windows)
+- 프로필 : BOM 이 붙은 `profile.json`(메모장, PowerShell 5) 허용. `PROFILE` 경로가 틀리면 세 스킬 모두 종료코드 2 로 같은 안내
+- `build_docx.js` 가 작업 폴더의 `node_modules` 에 설치한 `docx` 도 찾음
+- Word 템플릿의 문서 속성 작성자를 프로필 값(`AUTHOR_EN`)으로 채움
+- 문서 : 5-Zone 규격과 예시 코드를 정본 템플릿에 맞춤(Zone 3 은 글자 밑줄, Zone 4 는 y=1850000, 표는 1790000), 차트 글꼴 레시피를 OS 와 무관하게(`koreanize-matplotlib` 의 글꼴 경로), GNU 전용 `grep -P` 제거, Phase 0 스니펫이 폴더를 못 찾으면 멈춤, 줄표를 뺀 자리의 어색한 문장 정리
+- `doctor.py` 에 bash, pdftoppm 점검 추가. `selftest.py` 에 cp949 출력, 원장 대조 왕복, 게이트 오류 경로 시험 추가. 시험이 저장소에 `__pycache__` 를 남기지 않음
+
 ### 뺌 (Removed)
 
 - `copy_to_insights.sh`, `copy_to_insights.ps1` : 특정 PC 폴더 구조에 묶인 복사 스크립트. 저장 위치는 Phase 0 이 정함

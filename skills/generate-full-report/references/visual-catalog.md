@@ -42,9 +42,12 @@
 ## 3. Pillow 공통 레시피 (박스+화살표 helper)
 
 ```python
+import importlib.util, os
 from PIL import Image, ImageDraw, ImageFont
-F  = ImageFont.truetype('/root/.fonts/NanumGothic.ttf', 40)        # KR
-FB = ImageFont.truetype('/root/.fonts/NanumGothicBold.ttf', 46)
+# NanumGothic : pip 패키지 koreanize-matplotlib 에 든 글꼴을 경로로 씀 (Windows, macOS, Linux 공통, 설치 위치 무관)
+FONT_DIR = os.path.join(importlib.util.find_spec('koreanize_matplotlib').submodule_search_locations[0], 'fonts')
+F  = ImageFont.truetype(os.path.join(FONT_DIR, 'NanumGothic.ttf'), 40)        # KR 본문
+FB = ImageFont.truetype(os.path.join(FONT_DIR, 'NanumGothicBold.ttf'), 46)    # KR 굵게
 
 def box(d, x, y, w, h, text, fill='#EAF0F8', edge='#1A3A6B', font=F, color='#1A3A6B'):
     d.rounded_rectangle([x, y, x+w, y+h], radius=12, fill=fill, outline=edge, width=4)

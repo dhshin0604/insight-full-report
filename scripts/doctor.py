@@ -21,13 +21,21 @@ import shutil
 import subprocess
 import sys
 
+# Windows 의 cp949·cp1252 콘솔과 파이프에서도 출력 때문에 멈추지 않게 UTF-8 로 맞춤
+for _stdio in (sys.stdout, sys.stderr):
+    try:
+        _stdio.reconfigure(encoding='utf-8', errors='replace')
+    except (AttributeError, ValueError):
+        pass
+
 SKILLS = ['generate-full-report', 'image-deck', 'report-harness', 'quality-core']
 SYS = platform.system()  # Linux, Darwin, Windows
 
 
 def run(cmd, timeout=60, env=None):
     try:
-        p = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, env=env)
+        p = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8', errors='replace',
+                           timeout=timeout, env=env)
         return p.returncode, (p.stdout + p.stderr).strip()
     except (OSError, subprocess.TimeoutExpired) as e:
         return 1, str(e)
@@ -166,6 +174,7 @@ CHECKS = [
     ('python-pptx', lambda: check_module('pptx', 'python-pptx', 'python3 -m pip install python-pptx'), ['image-deck'], ['report-harness']),
     ('korean-font', check_korean_font, ['image-deck'], ['generate-full-report', 'report-harness']),
     ('soffice', lambda: check_tool('soffice', 'LibreOffice', hint(linux='sudo apt install libreoffice-writer libreoffice-impress', mac='brew install --cask libreoffice', win='winget install TheDocumentFoundation.LibreOffice')), [], ['generate-full-report', 'report-harness']),
+    ('pdftoppm', lambda: check_tool('pdftoppm', 'poppler pdftoppm (쪽 그림 확인)', hint(linux='sudo apt install poppler-utils', mac='brew install poppler', win='선택 사항 : 없으면 쪽 그림 확인을 건너뜀')), [], ['report-harness']),
     ('claude-cli', lambda: check_tool('claude', 'Claude Code CLI', 'npm install -g @anthropic-ai/claude-code'), [], ['generate-full-report']),
 ]
 

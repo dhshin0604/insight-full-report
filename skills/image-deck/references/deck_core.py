@@ -377,7 +377,7 @@ def profile_candidates():
 
 def _read_json(path):
     try:
-        with open(path, encoding="utf-8") as f:
+        with open(path, encoding="utf-8-sig") as f:   # BOM(메모장, PowerShell 5) 허용
             return json.load(f)
     except (OSError, ValueError):
         return None
@@ -403,6 +403,14 @@ def load_profile(required=DECK_REQUIRED, exit_on_missing=True, quiet=False):
     """
     global _PROFILE
     seen, chosen = [], None
+    env_file = os.environ.get("PROFILE")
+    if env_file and not os.path.isfile(env_file):
+        msg = ("[image-deck] 환경변수 PROFILE 이 가리키는 파일이 없음 : %s\n"
+               "  해결 : 경로를 고치거나 PROFILE 을 지우고 작업 폴더에 profile.json 을 둠" % os.path.abspath(env_file))
+        if exit_on_missing:
+            sys.stderr.write(msg + "\n")
+            raise SystemExit(2)
+        raise ValueError(msg)
     env_over = {k: os.environ.get("PROFILE_" + k, "").strip() for k in PROFILE_KEYS}
     for label, path in profile_candidates():
         if not os.path.isfile(path):
@@ -445,7 +453,7 @@ def load_profile(required=DECK_REQUIRED, exit_on_missing=True, quiet=False):
     _PROFILE = _finish_profile(chosen[1], chosen[0])
     env_path = os.environ.get("PROFILE")
     if env_path and os.path.abspath(env_path) != os.path.abspath(chosen[0]):
-        sys.stderr.write("[image-deck] 주의 : 환경변수 PROFILE(%s)에 빈 값이 있거나 파일이 없어 다음 후보를 씀\n" % env_path)
+        sys.stderr.write("[image-deck] 주의 : 환경변수 PROFILE(%s)에 빈 값이 있어 다음 후보를 씀\n" % env_path)
     if not quiet:
         print("[image-deck] 프로필 : %s" % _PROFILE["_path"])
     return dict(_PROFILE)
@@ -1591,13 +1599,15 @@ class RenderResult(list):
 
 
 def _safe_stdout():
-    """콘솔 인코딩이 UTF-8 이 아니어도 출력이 멈추지 않게 함(못 쓰는 글자는 ? 로)."""
+    """콘솔·파이프 인코딩이 cp949 등이어도 출력이 멈추지 않게 UTF-8 로 맞춤."""
     for stream in (sys.stdout, sys.stderr):
         try:
-            if (getattr(stream, "encoding", "") or "").lower().replace("-", "") != "utf8":
-                stream.reconfigure(errors="replace")
+            stream.reconfigure(encoding="utf-8", errors="replace")
         except (AttributeError, ValueError):
             pass
+
+
+_safe_stdout()  # import 할 때 한 번 : spec.py 가 render_all 전에 출력해도 멈추지 않게
 
 
 def _need_playwright():

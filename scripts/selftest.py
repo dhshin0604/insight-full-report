@@ -64,7 +64,7 @@ SKIP_DIRS = {'.git', 'dist', 'node_modules', '__pycache__', '.venv', 'venv'}
 
 RESULTS = []
 try:
-    sys.stdout.reconfigure(errors='replace')
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 except (AttributeError, ValueError):
     pass
 
@@ -82,10 +82,12 @@ def rec(group, name, status, detail='', secs=None):
     sys.stdout.flush()
 
 
-def run(cmd, cwd=None, env=None, timeout=600):
+def run(cmd, cwd=None, env=None, timeout=600, utf8=True):
+    """utf8=False 는 한국어 Windows 의 파이프(cp949)를 흉내 냄 : 스크립트가 스스로 UTF-8 로 맞추는지 시험."""
     e = dict(os.environ)
-    e['PYTHONIOENCODING'] = 'utf-8'
-    e['PYTHONUTF8'] = '1'
+    e['PYTHONIOENCODING'] = 'utf-8' if utf8 else 'cp949'
+    e['PYTHONUTF8'] = '1' if utf8 else '0'
+    e['PYTHONDONTWRITEBYTECODE'] = '1'   # 저장소 안에 __pycache__ 를 남기지 않음
     if env:
         e.update(env)
     try:
@@ -449,6 +451,51 @@ def st_package():
         '\n'.join(probs) if probs else '파일 %d개, %.1f MB (업로드 한도 5,000개, 200 MB 안)' % (n, size / 1048576.0))
 
 
+def claims_roundtrip(d, target, lang):
+    """원장 대조 경로 시험 : 빈 원장으로 걸린 숫자를 모두 등록하면 claims 게이트가 통과해야 함.
+    헤딩 번호·날짜 같은 구조 숫자가 걸리면 등록해도 남는 소음이므로 실패로 봄. target = ['--docx', f] 또는 ['--unpacked', d]."""
+    with open(os.path.join(d, 'empty_claims.json'), 'w', encoding='utf-8') as f:
+        json.dump({'topic': 'selftest', 'claims': []}, f)
+    run([PY, os.path.join(GFR, 'verify_claims.py'), '--claims', 'empty_claims.json', '--lang', lang,
+         '--json', 'claims_first.json'] + target, cwd=d)
+    try:
+        first = json.load(open(os.path.join(d, 'claims_first.json'), encoding='utf-8'))
+    except (OSError, ValueError):
+        return False, 'verify_claims 리포트 없음'
+    vals = sorted({e['detail'].split(' …')[0] for e in first.get('errors', []) if e.get('type') == 'NUM_UNREG'})
+    noise = [v for v in vals if re.fullmatch(r'\d{1,2}\.\d{1,2}', v) and v in HEADING_NUMS.get(d, set())]
+    led = {'topic': 'selftest', 'claims': [
+        {'id': 'S%03d' % i, 'text': 'selftest 등록 수치 %s' % v, 'value': v, 'status': 'verified', 'source': 'selftest'}
+        for i, v in enumerate(vals, 1)]}
+    with open(os.path.join(d, 'claims_all.json'), 'w', encoding='utf-8') as f:
+        json.dump(led, f, ensure_ascii=False)
+    run([PY, os.path.join(GFR, 'gate_report.py'), '--lang', lang, '--skill-dir', GFR, '--claims', 'claims_all.json',
+         '--out', 'gate_claims.json'] + target, cwd=d)
+    ok_gate, gs = gate_summary(os.path.join(d, 'gate_claims.json'))
+    ok = ok_gate and 'claims=ok' in gs and not noise
+    return ok, ('원장 대조 OK (본문 수치 %d개 등록)' % len(vals)) if ok else ('원장 대조 실패 : %s, 구조 숫자 %s' % (gs.splitlines()[0], noise))
+
+
+HEADING_NUMS = {}
+
+
+def docx_heading_numbers(path):
+    """Word 헤딩의 장·절 번호(1.1 등) : 원장 대조에서 이것이 걸리면 소음."""
+    out = set()
+    try:
+        with zipfile.ZipFile(path) as z:
+            xml = z.read('word/document.xml').decode('utf-8', 'replace')
+    except (OSError, zipfile.BadZipFile, KeyError):
+        return out
+    for para in re.findall(r'<w:p[ >].*?</w:p>', xml, re.S):
+        if re.search(r'<w:pStyle w:val="(?:Heading|heading|Title|TOC)', para):
+            text = ''.join(re.findall(r'<w:t[^>]*>([^<]*)</w:t>', para))
+            m = re.match(r'\s*(\d+\.\d+)', text)
+            if m:
+                out.add(m.group(1))
+    return out
+
+
 # ── gfr ───────────────────────────────────────────────────────────────────
 def gfr_pptx(out_dir, prof, lang, render):
     t0 = time.time()
@@ -469,10 +516,11 @@ def gfr_pptx(out_dir, prof, lang, render):
     rc2, o2 = run([PY, os.path.join(GFR, 'verify_lang_purity.py'), '--pptx', out, lang], cwd=d)
     with zipfile.ZipFile(os.path.join(d, out)) as z:
         n = sum(1 for x in z.namelist() if re.fullmatch(r'ppt/slides/slide\d+\.xml', x))
-    detail = '%d장, 게이트 %s, 언어 순도 %s' % (n, gs.splitlines()[0], 'OK' if rc2 == 0 else 'FAIL')
+    ok_c, msg_c = claims_roundtrip(d, ['--unpacked', 'unpacked_%s' % lang], lang)
+    detail = '%d장, 게이트 %s, 언어 순도 %s, %s' % (n, gs.splitlines()[0], 'OK' if rc2 == 0 else 'FAIL', msg_c)
     if render:
         detail += ', ' + soffice_pdf(os.path.join(d, out), d)
-    ok = rc == 0 and ok_gate and rc2 == 0 and n >= 6 and 'PDF 실패' not in detail
+    ok = rc == 0 and ok_gate and rc2 == 0 and n >= 6 and ok_c and 'PDF 실패' not in detail
     if not ok:
         detail += '\n' + '\n'.join(gs.splitlines()[1:]) + ('\n' + tail(o2, 4) if rc2 else '')
     rec('gfr', 'pptx-%s' % lang, 'PASS' if ok else 'FAIL', detail.strip(), time.time() - t0)
@@ -503,10 +551,12 @@ def gfr_word(out_dir, prof, lang, nenv, render):
          '--out', 'gate.json'], cwd=d)
     ok_gate, gs = gate_summary(os.path.join(d, 'gate.json'))
     rc2, o2 = run([PY, os.path.join(GFR, 'verify_lang_purity.py'), '--docx', out, lang], cwd=d)
-    detail = '게이트 %s, 언어 순도 %s' % (gs.splitlines()[0], 'OK' if rc2 == 0 else 'FAIL')
+    HEADING_NUMS[d] = docx_heading_numbers(os.path.join(d, out))
+    ok_c, msg_c = claims_roundtrip(d, ['--docx', out], lang)
+    detail = '게이트 %s, 언어 순도 %s, %s' % (gs.splitlines()[0], 'OK' if rc2 == 0 else 'FAIL', msg_c)
     if render:
         detail += ', ' + soffice_pdf(os.path.join(d, out), d)
-    ok = ok_gate and rc2 == 0 and 'PDF 실패' not in detail
+    ok = ok_gate and rc2 == 0 and ok_c and 'PDF 실패' not in detail
     if not ok:
         detail += '\n' + '\n'.join(gs.splitlines()[1:]) + ('\n' + tail(o2, 4) if rc2 else '')
     rec('gfr', 'word-%s' % lang, 'PASS' if ok else 'FAIL', detail.strip(), time.time() - t0)
@@ -553,9 +603,59 @@ def gfr_negative(out_dir):
         rep = {}
     types = sorted({e.get('type') for e in rep.get('errors', [])})
     ok = rc != 0 and rep.get('pass') is False and 'DASH' in types and 'HYPE_HARD' in types
+    # 게이트가 돌지 못한 경우는 통과가 아니어야 함 : 없는 DOCX, 형식이 틀린 claims.json
+    rc_m, _ = run([PY, os.path.join(GFR, 'gate_report.py'), '--docx', 'no_such.docx', '--skill-dir', GFR,
+                   '--out', 'missing.json'], cwd=d)
+    with open(os.path.join(d, 'bad_claims.json'), 'w', encoding='utf-8') as f:
+        json.dump([{'id': 'C1'}], f)
+    rc_c, _ = run([PY, os.path.join(GFR, 'gate_report.py'), '--unpacked', src, '--lang', 'en', '--skill-dir', GFR,
+                   '--claims', 'bad_claims.json', '--out', 'badclaims.json'], cwd=d)
+    try:
+        g_c = json.load(open(os.path.join(d, 'badclaims.json'), encoding='utf-8'))
+    except (OSError, ValueError):
+        g_c = {}
+    err_ok = rc_m == 2 and rc_c == 1 and g_c.get('gates', {}).get('claims') == 'fail'
+    ok = ok and err_ok
     rec('gfr', 'gate-catches', 'PASS' if ok else 'FAIL',
-        '줄표와 과장어를 넣은 EN 슬라이드에서 %s 검출, 게이트 실패' % ', '.join(types) if ok else
-        'rc=%d, 오류 종류 %s\n%s' % (rc, types, tail(o, 6)), time.time() - t0)
+        '줄표와 과장어를 넣은 EN 슬라이드에서 %s 검출, 없는 DOCX 와 틀린 claims.json 도 실패 처리' % ', '.join(types)
+        if ok else 'rc=%d, 오류 종류 %s, 없는 DOCX rc=%d, 틀린 claims rc=%d %s\n%s'
+        % (rc, types, rc_m, rc_c, g_c.get('gates'), tail(o, 6)), time.time() - t0)
+
+
+def gfr_cp949(out_dir):
+    """한국어 Windows 파이프(cp949)를 흉내 내어 게이트 스크립트가 출력 때문에 멈추지 않는지, 판정이 그대로인지 봄."""
+    t0 = time.time()
+    good = os.path.join(out_dir, 'gfr_pptx_kr', 'unpacked_kr')
+    bad = os.path.join(out_dir, 'gfr_negative', 'unpacked_en')
+    pptx = os.path.join(out_dir, 'gfr_pptx_kr', 'Selftest_KR_Presentation_20261012.pptx')
+    if not (os.path.isdir(good) and os.path.isdir(bad)):
+        return rec('gfr', 'cp949-pipe', 'SKIP', 'pptx-kr 또는 gate-catches 결과가 없어 생략')
+    d = os.path.join(out_dir, 'gfr_cp949')
+    os.makedirs(d, exist_ok=True)
+    checks = [
+        ('verify_toc', [PY, os.path.join(GFR, 'verify_toc.py'), good], 0),
+        ('apply_profile --which', [PY, os.path.join(GFR, 'apply_profile.py'), '--which'], 0),
+        ('ooxml_tools check', [PY, os.path.join(GFR, 'ooxml_tools.py'), 'check', pptx], 0),
+        ('verify_lang_purity', [PY, os.path.join(GFR, 'verify_lang_purity.py'), '--pptx', pptx, 'kr'], 0),
+        ('gate_report 좋은 PPTX', [PY, os.path.join(GFR, 'gate_report.py'), '--unpacked', good, '--lang', 'kr',
+                                 '--skill-dir', GFR, '--out', 'good.json'], 0),
+        ('gate_report 나쁜 PPTX', [PY, os.path.join(GFR, 'gate_report.py'), '--unpacked', bad, '--lang', 'en',
+                                 '--skill-dir', GFR, '--out', 'bad.json'], 1),
+    ]
+    probs = []
+    for label, cmd, want in checks:
+        rc, o = run(cmd, cwd=d, env={'PROFILE': os.path.join(out_dir, 'profile.json')}, utf8=False)
+        if rc != want or 'Traceback' in o or 'UnicodeEncodeError' in o:
+            probs.append('%s : 종료코드 %d (기대 %d) %s' % (label, rc, want, tail(o, 3)))
+    try:
+        gb = json.load(open(os.path.join(d, 'bad.json'), encoding='utf-8'))
+        if gb.get('pass') is not False or gb.get('gates', {}).get('content') != 'fail':
+            probs.append('나쁜 PPTX 가 cp949 에서 통과로 나옴 : %s' % gb.get('gates'))
+    except (OSError, ValueError):
+        probs.append('bad.json 없음')
+    rec('gfr', 'cp949-pipe', 'FAIL' if probs else 'PASS',
+        '\n'.join(probs) if probs else 'cp949 파이프에서도 6개 스크립트가 멈추지 않고, 나쁜 PPTX 는 그대로 실패',
+        time.time() - t0)
 
 
 # ── harness ───────────────────────────────────────────────────────────────
@@ -766,6 +866,7 @@ def main():
         for lang in ('kr', 'en'):
             gfr_word(out_dir, prof, lang, nenv, a.render)
         gfr_negative(out_dir)
+        gfr_cp949(out_dir)
     if 'harness' in groups:
         harness(out_dir, prof, nenv, a.render)
         harness_negative(out_dir, nenv)

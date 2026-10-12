@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-verify_claims.py: Deep Verification 기계 게이트 (v0.9)
+verify_claims.py: Deep Verification 기계 게이트 (v1.0)
 
 claims.json(Claims Ledger)과 빌드 산출물(docx 또는 unpacked pptx)을 대조해
 할루시네이션성 수치를 결정론적으로 차단한다. factcheck-pipeline.md 참조.
@@ -13,6 +13,13 @@ claims.json(Claims Ledger)과 빌드 산출물(docx 또는 unpacked pptx)을 대
   [W] NO_URL        verified claim에 url/source 부재
   [E] BAD_STATUS    status 가 verified/estimate/removed 외의 값
 
+수치로 보지 않는 것 (v1.0) : 문서 구조가 만드는 번호와 날짜
+  - 연도 단독(1900~2099), 전화번호, 12 이하의 정수(항번호·소량 수사)
+  - Word 헤딩(Heading·Title·TOC 스타일) 맨 앞의 장·절 번호 : "1.", "1.1", "2.3.1"
+  - 캡션 번호 : [표 3], [그림 12], [Table 3], [Figure 12], 질문 번호 Q13.
+  - 날짜 : 2026.04.08, 2026-10-12, 2026/10, 2026년 10월 12일, 10월 12일, October 12, 2026, 12 Oct 2026
+  사건의 날짜가 맞는지는 원장(claims.json)의 text 와 2차 검증·독립 검토가 맡음
+
 사용:
   python3 verify_claims.py --claims claims.json --docx report.docx --lang kr [--json out.json]
   python3 verify_claims.py --claims claims.json --unpacked unpacked_kr --lang kr
@@ -20,6 +27,13 @@ claims.json(Claims Ledger)과 빌드 산출물(docx 또는 unpacked pptx)을 대
 """
 import sys, os, re, json, zipfile, argparse
 import xml.etree.ElementTree as ET
+
+# Windows 의 cp949·cp1252 콘솔과 파이프에서도 출력 때문에 멈추지 않게 UTF-8 로 맞춤
+for _stdio in (sys.stdout, sys.stderr):
+    try:
+        _stdio.reconfigure(encoding='utf-8', errors='replace')
+    except (AttributeError, ValueError):
+        pass
 
 NS_A = '{http://schemas.openxmlformats.org/drawingml/2006/main}'
 NS_W = '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}'
@@ -32,24 +46,56 @@ EST_KR = ['추정', '전망치', '외삽']
 EST_EN = ['est.', 'estimate', 'projected', 'extrapolat']
 
 
+MONTHS = r'(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)[a-z]*\.?'
+DATE_RES = [
+    re.compile(r'(?<![\d.])(?:19|20)\d{2}\s*([.\-/])\s*(?:0?[1-9]|1[0-2])\s*\1\s*(?:0?[1-9]|[12]\d|3[01])(?!\d)\.?'),  # 2026.04.08
+    re.compile(r'(?<![\d.])(?:19|20)\d{2}\.(?:0[1-9]|1[0-2])(?![\d.%])(?!\s*(?:억|조|만|천|원|달러|배|위안|엔|MW|GW|kW|km|kg|t\b))'),  # 2026.04 (두 자리 월)
+    re.compile(r'(?<![\d.])(?:19|20)\d{2}[-/](?:0?[1-9]|1[0-2])(?![\d.])'),                                            # 2026-10, 2026/10
+    re.compile(r'(?<!\d)(?:19|20)\d{2}\s*년\s*\d{1,2}\s*월(?:\s*\d{1,2}\s*일)?'),               # 2026년 10월 12일
+    re.compile(r'(?<!\d)\d{1,2}\s*월\s*\d{1,2}\s*일'),                                          # 10월 12일
+    re.compile(r'\b' + MONTHS + r'\s+\d{1,2},?\s+(?:19|20)\d{2}\b', re.I),                      # October 12, 2026
+    re.compile(r'\b\d{1,2}\s+' + MONTHS + r',?\s+(?:19|20)\d{2}\b', re.I),                      # 12 Oct 2026
+]
+CAPTION_RE = re.compile(r'\[\s*(?:표|그림|Table|Figure|Fig\.)\s*\d+\s*\]', re.I)
+QNUM_RE = re.compile(r'(?<![A-Za-z0-9])Q\d{1,2}(?=[.:)\s])')   # 핵심 질문 번호 Q1. Q13:
+OUTLINE_RE = re.compile(r'^\s*\d+(?:\.\d+)*\.?(?=\s)')
+HEADING_STYLE_RE = re.compile(r'^(?:heading|title|toc|subtitle)', re.I)
+
+
+def strip_structural(text, heading=False):
+    """수치 검사에서 뺄 것(헤딩 번호, 캡션 번호, 날짜)을 공백으로 바꿈. 위치는 그대로 둠."""
+    if heading:
+        text = OUTLINE_RE.sub(lambda m: ' ' * len(m.group(0)), text, count=1)
+    text = CAPTION_RE.sub(lambda m: ' ' * len(m.group(0)), text)
+    text = QNUM_RE.sub(lambda m: ' ' * len(m.group(0)), text)
+    for rx in DATE_RES:
+        text = rx.sub(lambda m: ' ' * len(m.group(0)), text)
+    return text
+
+
 def texts_from_unpacked(base):
-    d = os.path.join(base.rstrip('/'), 'ppt', 'slides')
+    """[(위치, 텍스트, 헤딩 여부)] : 슬라이드마다 한 덩어리."""
+    d = os.path.join(base.rstrip('/\\'), 'ppt', 'slides')
     out = []
-    for fn in sorted(os.listdir(d)):
+    for fn in sorted(os.listdir(d), key=lambda f: int(re.search(r'(\d+)', f).group(1)) if re.search(r'\d+', f) else 0):
         if re.match(r'slide\d+\.xml$', fn):
             root = ET.parse(os.path.join(d, fn)).getroot()
-            out.append((fn, ' '.join((t.text or '') for t in root.iter(NS_A + 't'))))
+            out.append((fn[:-4], ' '.join((t.text or '') for t in root.iter(NS_A + 't')), False))
     return out
 
 
 def texts_from_docx(path):
+    """[(위치, 문단 텍스트, 헤딩 여부)] : 위치는 p{문단 번호}, 헤딩은 Heading·Title·TOC 스타일."""
     with zipfile.ZipFile(path) as z:
         root = ET.fromstring(z.read('word/document.xml'))
     paras = []
-    for p in root.iter(NS_W + 'p'):
+    for i, p in enumerate(root.iter(NS_W + 'p'), 1):
         s = ''.join((t.text or '') for t in p.iter(NS_W + 't'))
-        if s.strip():
-            paras.append(('docx', s))
+        if not s.strip():
+            continue
+        ps = p.find(NS_W + 'pPr/' + NS_W + 'pStyle')
+        style = ps.get(NS_W + 'val', '') if ps is not None else ''
+        paras.append(('docx:p%d' % i, s, bool(HEADING_STYLE_RE.match(style))))
     return paras
 
 
@@ -83,7 +129,8 @@ def main():
     ap.add_argument('--json')
     a = ap.parse_args()
 
-    ledger = json.load(open(a.claims, encoding='utf-8'))
+    with open(a.claims, encoding='utf-8-sig') as f:
+        ledger = json.load(f)
     claims = ledger.get('claims', [])
     errors, warnings = [], []
 
@@ -111,8 +158,8 @@ def main():
     units = texts_from_docx(a.docx) if a.docx else texts_from_unpacked(a.unpacked)
     est_markers = EST_KR if a.lang == 'kr' else EST_EN
 
-    for loc, text in units:
-        for v, ctx in significant_numbers(text):
+    for loc, text, is_heading in units:
+        for v, ctx in significant_numbers(strip_structural(text, is_heading)):
             if v not in reg_values:
                 errors.append({'type': 'NUM_UNREG', 'loc': loc, 'detail': '%s … "%s"' % (v, ctx.strip()),
                                'fix': '수치 %s 를 claims.json에 등록·검증하거나 본문에서 제거' % v})

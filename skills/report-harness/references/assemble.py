@@ -39,11 +39,10 @@ if HERE not in sys.path:
     sys.path.insert(0, HERE)
 import wb  # noqa: E402
 
-if hasattr(sys.stdout, "reconfigure"):
+for _stdio in (sys.stdout, sys.stderr):  # Windows cp949·cp1252 에서도 멈추지 않게 UTF-8 로 맞춤
     try:
-        sys.stdout.reconfigure(errors="replace")
-        sys.stderr.reconfigure(errors="replace")
-    except Exception:
+        _stdio.reconfigure(encoding="utf-8", errors="replace")
+    except (AttributeError, ValueError):
         pass
 
 META_PREFIX = wb.META_PREFIX

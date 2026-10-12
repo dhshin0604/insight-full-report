@@ -12,7 +12,7 @@ LLM 없이 규칙 기반으로 채점한다. 결정론적으로 잡을 수 있�
   [E] BULLET      Word 본문 bullet 문자(•▪‣ 등): docx 전용          -> ERROR
   [E] CJK_KR      한글문서 본문의 '괄호 밖' 독립 한자/가나 토큰        -> ERROR
   [W] CJK_EN      영문문서 본문의 pinyin 없는 단독 中文                -> WARNING
-  [W] KEYMSG      PPTX content 슬라이드에 KEY MESSAGE(임./음.) 부재    -> WARNING
+  [W] KEYMSG      PPTX content 슬라이드에 KEY MESSAGE(KR 명사형 종결 임./음./함. 등, EN 40자 이상 완결 문장) 부재 -> WARNING
   [W] SOURCE      문서 끝 출처/Source 섹션 부재                       -> WARNING
   [E] HEADNUM     Word 챕터 헤딩 번호(1. / 1.1) 누락·순서 오류: docx  -> ERROR (v0.9.1)
   [E/W] DASH      줄표(U+2014) : 영문 ERROR, 한글 WARNING (lexicon.json dash.level)  (v1.0)
@@ -28,6 +28,13 @@ LLM 없이 규칙 기반으로 채점한다. 결정론적으로 잡을 수 있�
 """
 import sys, os, re, json, zipfile, argparse
 import xml.etree.ElementTree as ET
+
+# Windows 의 cp949·cp1252 콘솔과 파이프에서도 출력 때문에 멈추지 않게 UTF-8 로 맞춤
+for _stdio in (sys.stdout, sys.stderr):
+    try:
+        _stdio.reconfigure(encoding='utf-8', errors='replace')
+    except (AttributeError, ValueError):
+        pass
 
 NS_A = '{http://schemas.openxmlformats.org/drawingml/2006/main}'
 NS_W = '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}'
@@ -74,22 +81,56 @@ AI_TONE = {lg: _lex('ai_tone', lg, []) for lg in ('kr', 'en')}
 POINTER = {lg: _lex('pointer', lg, []) for lg in ('kr', 'en')}
 BANNED = {lg: _lex('user_banned', lg, []) for lg in ('kr', 'en')}
 CJK_RE = re.compile(r'[㐀-䶿一-鿿぀-ゟ゠-ヿ]+')
-KEYMSG_RE = re.compile(r'(임|음)\.\s*$')
+KEYMSG_RE = re.compile(r'([가-힣])\.\s*$')  # 명사형 종결 : 마지막 글자 받침이 ㅁ (임, 음, 함, 됨, 짐 ...)
+
+
+def _is_noun_ending(text):
+    m = KEYMSG_RE.search(text)
+    return bool(m) and (ord(m.group(1)) - 0xAC00) % 28 == 16
+KEYMSG_EN_RE = re.compile(r'[.!?]\s*$')   # 영문 KEY MESSAGE : 40자 이상의 완결 문장
 SOURCE_HINT = ['출처', 'source', 'sources', 'references', '참고문헌']
 
 
+def _ordered_slide_files(base):
+    """presentation.xml 의 sldIdLst(실제 보이는 순서)대로 슬라이드 파일 이름. 읽지 못하면 파일 번호 순."""
+    ppt = os.path.join(base, 'ppt')
+    try:
+        with open(os.path.join(ppt, 'presentation.xml'), encoding='utf-8') as f:
+            pres = f.read()
+        with open(os.path.join(ppt, '_rels', 'presentation.xml.rels'), encoding='utf-8') as f:
+            rels = f.read()
+        rmap = {}
+        for tag in re.findall(r'<Relationship\b[^>]*/>', rels):
+            i = re.search(r'\bId="([^"]+)"', tag)
+            t = re.search(r'\bTarget="([^"]+)"', tag)
+            if i and t:
+                rmap[i.group(1)] = os.path.basename(t.group(1))
+        lst = re.search(r'<p:sldIdLst>(.*?)</p:sldIdLst>', pres, re.S)
+        order = [rmap.get(r) for r in re.findall(r'<p:sldId\b[^>]*\br:id="([^"]+)"', lst.group(1))] if lst else []
+        order = [o for o in order if o]
+        if order:
+            return order
+    except OSError:
+        pass
+    d = os.path.join(ppt, 'slides')
+    return sorted((f for f in os.listdir(d) if re.match(r'slide\d+\.xml$', f)),
+                  key=lambda f: int(re.search(r'(\d+)', f).group(1)))
+
+
 def slides_from_unpacked(base):
-    d = os.path.join(base.rstrip('/'), 'ppt', 'slides')
+    """[(이름, [텍스트...]), ...] 를 보이는 순서대로. 이름은 'slide5' 처럼 파일 이름에서 .xml 을 뺀 것."""
+    base = base.rstrip('/\\')
+    d = os.path.join(base, 'ppt', 'slides')
     if not os.path.isdir(d):
         sys.stderr.write('ERROR: %s 없음\n' % d); sys.exit(2)
-    out = {}
-    for fn in os.listdir(d):
-        m = re.match(r'slide(\d+)\.xml$', fn)
-        if not m:
+    out = []
+    for fn in _ordered_slide_files(base):
+        path = os.path.join(d, fn)
+        if not os.path.isfile(path):
             continue
-        root = ET.parse(os.path.join(d, fn)).getroot()
-        out[int(m.group(1))] = [(t.text or '') for t in root.iter('%st' % NS_A)]
-    return dict(sorted(out.items()))
+        root = ET.parse(path).getroot()
+        out.append((fn[:-4], [(t.text or '') for t in root.iter('%st' % NS_A)]))
+    return out
 
 
 def runs_from_docx(path):
@@ -235,17 +276,22 @@ def run(args):
 
     if args.unpacked:
         slides = slides_from_unpacked(args.unpacked)
-        last = max(slides) if slides else 0
-        for n, texts in slides.items():
-            judge_dump['slide%d' % n] = texts
-            kind = 'pptx_meta' if n <= 2 or n == last else 'pptx_body'
-            check_texts('slide%d' % n, texts, args.lang, errors, warnings, kind)
+        n_sl = len(slides)
+        for i, (name, texts) in enumerate(slides):
+            judge_dump[name] = texts
+            # 보이는 순서로 표지(1)·INDEX(2)·맺음말(마지막)은 메타, 나머지는 본문
+            kind = 'pptx_meta' if i < 2 or i == n_sl - 1 else 'pptx_body'
+            check_texts(name, texts, args.lang, errors, warnings, kind)
             if kind == 'pptx_body':
-                if not any(KEYMSG_RE.search(t.strip()) for t in texts):
-                    warnings.append({'type': 'KEYMSG', 'loc': 'slide%d' % n,
+                if args.lang == 'en':
+                    has_key = any(len(t.strip()) >= 40 and KEYMSG_EN_RE.search(t.strip()) for t in texts)
+                else:
+                    has_key = any(_is_noun_ending(t.strip()) for t in texts)
+                if not has_key:
+                    warnings.append({'type': 'KEYMSG', 'loc': name,
                                      'detail': 'KEY MESSAGE 없음',
                                      'fix': 'Zone2에 ~임./~음. 완결 통찰문 1줄 추가'})
-        tail = ' '.join(slides.get(last, []) + slides.get(last - 1, [])).lower()
+        tail = ' '.join(sum((t for _, t in slides[-2:]), [])).lower()
         if not any(h in tail for h in SOURCE_HINT):
             warnings.append({'type': 'SOURCE', 'loc': 'pptx-tail', 'detail': 'Source 미검출',
                              'fix': '본문 Zone5/말미에 출처 표기 확인'})

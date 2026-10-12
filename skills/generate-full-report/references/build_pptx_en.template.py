@@ -8,6 +8,14 @@ build_pptx.sh 오케스트레이터에서 호출된다. unpack/pack/strip 등은
 """
 import os, re
 
+import sys
+# Windows 의 cp949·cp1252 콘솔과 파이프에서도 출력 때문에 멈추지 않게 UTF-8 로 맞춤
+for _stdio in (sys.stdout, sys.stderr):
+    try:
+        _stdio.reconfigure(encoding='utf-8', errors='replace')
+    except (AttributeError, ValueError):
+        pass
+
 TARGET = os.environ.get('TARGET_UNPACKED', 'unpacked_en')
 SLIDES = f'{TARGET}/ppt/slides'
 
@@ -310,7 +318,7 @@ save(4, sld(
         pp_b(rr('Apptronik: $350M Series A', sz=1100)) +
         pp_b(rr('China total: 744 deals, ¥73.5B', sz=1100)),
         pp(rr('Industry Status & 3 Key Debates', sz=1300, bold=True, color='1A3A6B')) +
-        pp_b(rr('Pathway: Sense→Perceive→Decide→Act: data vs. model weighting?', sz=1050)) +
+        pp_b(rr('Pathway (Sense→Perceive→Decide→Act): data vs. model weighting?', sz=1050)) +
         pp_b(rr('Body design: Specialized form vs. general-purpose form?', sz=1050)) +
         pp_b(rr('Data strategy: Real-world collection vs. simulation synthesis?', sz=1050)) +
         pp_e() +
@@ -378,7 +386,7 @@ save(8, sld(
     z4_2col(
         pp(rr('① Unified Single-System VLA', sz=1300, bold=True, color='1A3A6B')) +
         pp_b(rr('UniAct (Tsinghua): Heterogeneous-data universal action space; 4 control interfaces from only 100 demos', sz=1050)) +
-        pp_b(rr('MLA (Peking Univ.): Full multi-sensor fusion: image, point cloud, tactile, language', sz=1050)) +
+        pp_b(rr('MLA (Peking Univ.): Full multi-sensor fusion (image, point cloud, tactile, language)', sz=1050)) +
         pp_b(rr('GEN-0 (Generalist AI): Async time-step processing; rapid adaptation at 10B parameters', sz=1050)) +
         pp_e() +
         pp(rr('② Layered Dual-System', sz=1300, bold=True, color='1A3A6B')) +
@@ -476,7 +484,7 @@ save(11, sld(
 # ─── SLIDE 12: V Future Outlook ──────────────────────────────────
 save(12, sld(
     z1('VI. Future Outlook', '$339.8B Market · Tech Roadmap · Implications') +
-    z2('Embodied AI will advance along three directions: architectural reinvention, application deepening, and safety & ethics framework: forming a $339.8B market by 2030.') +
+    z2('Embodied AI will advance along three directions (architectural reinvention, application deepening, and a safety and ethics framework), forming a $339.8B market by 2030.') +
     z3('Three Development Directions') +
     z4(
         pp(rr('① Architectural Reinvention: "Stacked Function Modules" → "Multi-modal Cognitive Fusion"', sz=1300, bold=True, color='1A3A6B')) +

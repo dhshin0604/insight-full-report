@@ -2,7 +2,7 @@
 name: quality-core
 description: |
   신동형 공통 품질 코어 v0.1: 어떤 문서·초안·보고서든 신동형 인사이트의 5대 품질 장치(Claims Ledger 사실 검증, So-What 통찰 강제, 문형·표기 규율, 16점 judge 채점, 재시도≤3회 루프)를 적용해 검증·개선한다. 산출물 형식 무관(MD·텍스트·Word 초안·이메일·타인이 쓴 보고서). 4종 정본 문서 생성은 본 스킬이 아니라 generate-full-report가 담당하며, 본 스킬은 '코어만 떼어낸' 범용 검증기다.
-  Triggers (한국어): 품질 코어, 품질 코어 적용, 품질 검증, 퀄리티 체크, 이 초안 검증해줘, 팩트체크 게이트, claims 검증, 수치 검증해줘, So-What 점검, 인사이트 점검, 16점 채점, 루브릭 채점, 반론 점검, 딥체크만.
+  Triggers (한국어): 품질 코어, 품질 코어 적용, 품질 검증, 퀄리티 체크, 이 초안 검증해줘, 팩트체크 게이트, claims 검증, 수치 검증해줘, So-What 점검, 인사이트 점검, 16점 채점, 루브릭 채점, 반론 점검, 딥체크만, 초안 딥체크.
   Triggers (English): quality core, verify this draft, factcheck gate, claims ledger check, so-what review, rubric scoring, deep verification only.
 ---
 
@@ -33,7 +33,7 @@ description: |
 4. references/style-rules.md     ← 문형·표기 규율 (사실↔해석, 추정 표기, 출처)
 ```
 
-보조 도구: `references/verify_claims_lite.py`: MD/텍스트 대상 경량 기계 대조 스크립트. 경로는 스킬 폴더 `${CLAUDE_SKILL_DIR}` 기준(Claude Code, Cowork 는 실제 경로로 바꿔 보여 줌. 그대로 보이면 이 SKILL.md 가 있는 폴더).
+보조 도구: `references/verify_claims_lite.py` (MD/텍스트 대상 경량 기계 대조 스크립트). 경로는 스킬 폴더 `${CLAUDE_SKILL_DIR}` 기준(Claude Code, Cowork 는 실제 경로로 바꿔 보여 줌. 그대로 보이면 이 SKILL.md 가 있는 폴더).
 
 ## 🚫 ANTI-DRIFT: 절대 금지
 

@@ -21,6 +21,8 @@
 #   LOGO       : 표지 로고 PNG (기본 references/logo.png, 없으면 템플릿의 빈 이미지 유지)
 #   PYTHON     : 파이썬 실행 파일 (기본 python3)
 set -euo pipefail
+# Windows(Git Bash) 의 cp949 파이프에서도 파이썬 출력이 멈추지 않게 UTF-8 로 고정
+export PYTHONUTF8=1 PYTHONIOENCODING=utf-8
 
 LANG_CODE="${1:?Usage: build_pptx.sh <kr|en> <build_script.py> <output.pptx>}"
 BUILD_PY="${2:?build script path required}"
@@ -43,7 +45,7 @@ done
 [ -f "$BUILD_PY" ] || { echo "ERROR: 빌드 스크립트 없음 : $BUILD_PY"; exit 2; }
 
 # 프로필 자동 선택 : PROFILE 환경변수 > ./profile.json(작업 폴더) > references/profile.json
-PROFILE="$("$PY" "$APPLY_PROFILE" --which)"
+PROFILE="$("$PY" "$APPLY_PROFILE" --which | tr -d '\r')"   # Windows 파이썬의 CRLF 줄끝 제거
 UNPACKED="unpacked_${LANG_CODE}"
 
 echo "==============================================================="

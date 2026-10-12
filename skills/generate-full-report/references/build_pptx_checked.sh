@@ -9,9 +9,11 @@
 #   bash build_pptx_checked.sh kr build_pptx_kr.py 주제_KR_Presentation_YYYYMMDD.pptx
 # 옵션 환경변수:
 #   JUDGE_VERDICT=judge_verdict_kr.json   # LLM-judge 결과가 있으면 함께 합산
+#   PYTHON=python                         # python3 명령이 없을 때 (Windows 등). build_pptx.sh 에도 그대로 전달됨
 #
 # 종료코드: 모든 게이트 통과 0, 하나라도 실패 1 (gate_${lang}.json 에 fixes[] 산출)
 set -uo pipefail   # ※ set -e 는 일부러 제외: 게이트 실패를 직접 처리해야 함
+export PYTHONUTF8=1 PYTHONIOENCODING=utf-8   # Windows(Git Bash) 파이프에서도 출력 때문에 멈추지 않게
 
 LANG_CODE="${1:?Usage: build_pptx_checked.sh <kr|en> <build.py> <out.pptx>}"
 BUILD_PY="${2:?build script required}"
@@ -19,6 +21,7 @@ OUTPUT="${3:?output filename required}"
 SKILL_DIR="$(cd "$(dirname "$0")" && pwd)"
 UNPACKED="unpacked_${LANG_CODE}"
 JUDGE="${JUDGE_VERDICT:-}"
+PY="${PYTHON:-python3}"
 
 echo "─── [1/2] 빌드: build_pptx.sh $LANG_CODE ───"
 bash "$SKILL_DIR/build_pptx.sh" "$LANG_CODE" "$BUILD_PY" "$OUTPUT"
@@ -27,7 +30,7 @@ echo "build_pptx.sh exit = $BUILD_RC"
 
 echo "─── [2/2] 통합 게이트: gate_report.py ───"
 if [ -d "$UNPACKED" ]; then
-  python3 "$SKILL_DIR/gate_report.py" --unpacked "$UNPACKED" --lang "$LANG_CODE" \
+  "$PY" "$SKILL_DIR/gate_report.py" --unpacked "$UNPACKED" --lang "$LANG_CODE" \
       --skill-dir "$SKILL_DIR" ${JUDGE:+--judge "$JUDGE"} --out "gate_${LANG_CODE}.json"
   GATE_RC=$?
 else

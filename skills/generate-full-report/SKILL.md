@@ -2,8 +2,8 @@
 name: generate-full-report
 description: |
   신동형 인사이트 4종 문서 생성기 v1.0. 소스(URL, PDF, 영상, 텍스트)를 받아 Word 한글·영문과 글자를 고칠 수 있는 PowerPoint 한글·영문을 정본 템플릿으로 한 번에 만들고, TOC·내용 규칙·수치-출처(Claims Ledger)·16점 judge 의 4중 게이트로 검증함. 중국어·일본어 소스는 한/영으로 정규화함. 여러 에이전트가 조사하고 MD 토의본 확인을 거치는 큰 보고서는 report-harness, 이미지 슬라이드 덱(PNG·PDF)만 필요하면 image-deck 을 씀.
-  Triggers (한국어): 보고서 만들어, 워드랑 파워포인트, 4종 문서, 전체 문서 만들어, 신동형 스타일, 인사이트 보고서, 분석 보고서, 워크플로로 만들어, 딥체크.
-  Triggers (English): generate full report, word and pptx, 4-doc bundle, insight report, analyst report, ultracode, deep verification.
+  Triggers (한국어): 보고서 만들어, 워드랑 파워포인트, 4종 문서, 전체 문서 만들어, 신동형 스타일, 인사이트 보고서, 분석 보고서, 워크플로로 만들어, 딥체크 보고서.
+  Triggers (English): generate full report, word and pptx, 4-doc bundle, insight report, analyst report, ultracode, deep-verified report.
 ---
 
 # 인사이트 전체 보고서 생성 스킬 v1.0 (Unified Deep-Verify Edition)
@@ -128,7 +128,7 @@ Q6. 본문에 수치를 쓰기 위한 전제 조건은?
 4. **주제 슬러그(폴더/파일명용)**: 한글/영문 혼용 가능, 공백은 언더스코어(`_`)로. 예: `AI에이전트`, `반도체_2026`
 
 > 세션 임시 폴더는 세션이 끝나면 사라질 수 있으므로 산출물은 사용자가 다시 열 수 있는 곳에 둠. 아래 Phase 0 를 건너뛰지 않음.
-> Deep Verification(Phase 2.7)은 v0.9의 **기본값**입니다: 별도 질문 없이 항상 수행합니다.
+> Deep Verification(Phase 2.7)은 v0.9의 **기본값**입니다. 별도 질문 없이 항상 수행합니다.
 
 ---
 
@@ -182,14 +182,18 @@ if ls -d /sessions/*/mnt >/dev/null 2>&1; then                     # Cowork
   SESSION_MNT=$(ls -d /sessions/*/mnt | head -1)
   DEST_ROOT=""
   [ -n "$WORKSPACE_DIRNAME" ] && DEST_ROOT=$(find "$SESSION_MNT" -maxdepth 4 -type d -name "$WORKSPACE_DIRNAME" 2>/dev/null | head -1)
-  [ -z "$DEST_ROOT" ] && echo "영구 폴더가 연결되지 않음 : request_cowork_directory 로 연결을 요청한 뒤 다시 실행"
 elif [ -n "$WORKSPACE_ROOT" ] && [ -d "$WORKSPACE_ROOT" ]; then    # Claude Code + 프로필 경로
   DEST_ROOT="$WORKSPACE_ROOT"
 else                                                               # Claude Code 기본, Claude 앱 작업 공간
   DEST_ROOT="$(pwd)"
 fi
-WORKSPACE="$DEST_ROOT/${TOPIC_SLUG}_${TODAY}"
-mkdir -p "$WORKSPACE" && echo "WORKSPACE = $WORKSPACE"
+if [ -z "$DEST_ROOT" ]; then
+  # 여기서 멈춤 : 빈 DEST_ROOT 로 진행하면 파일 시스템 맨 위(/)에 폴더를 만들게 됨
+  echo "STOP : 영구 폴더가 연결되지 않음. request_cowork_directory 로 폴더 연결을 요청한 뒤 이 블록을 다시 실행"
+else
+  WORKSPACE="$DEST_ROOT/${TOPIC_SLUG}_${TODAY}"
+  mkdir -p "$WORKSPACE" && echo "WORKSPACE = $WORKSPACE"
+fi
 ```
 
 ### STEP 0-B : 자기 점검
@@ -209,11 +213,11 @@ mkdir -p "$WORKSPACE" && echo "WORKSPACE = $WORKSPACE"
 
 수집 완료 후 소스 제목·저자·날짜·핵심 주제 정리. 이때 **소스 원문의 언어**도 기록 (예: `KR / EN / ZH(简体) / ZH(繁體) / JA / 혼합`).
 
-> 이 시점부터 Claims Ledger(`claims.json`) 작성을 시작합니다: 소스에서 발견한 핵심 수치·사건을 바로 등록해 두면 Phase 2.7 검증이 빨라집니다 (`references/factcheck-pipeline.md` §1 스키마).
+> 이 시점부터 Claims Ledger(`claims.json`) 작성을 시작합니다. 소스에서 발견한 핵심 수치·사건을 바로 등록해 두면 Phase 2.7 검증이 빨라집니다 (`references/factcheck-pipeline.md` §1 스키마).
 
 ---
 
-## Phase 1.5: 다국어 소스 언어 정규화 (Multilingual Source Normalization): 조건부 **필수**
+## Phase 1.5: 다국어 소스 언어 정규화 (Multilingual Source Normalization, 조건부 **필수**)
 
 > **Why this phase exists**: 중국어·일본어·기타 비(非) 한/영 원문 소스를 그대로 분석에 쓰면 최종 Word/PPTX 본문에 한자(漢字)·中文·가나 문자가 섞여 들어가 신동형 인사이트의 한글/영문 정본 포맷을 훼손합니다. 본 Phase 에서 **정규화된 노트(normalized notes)** 를 먼저 만든 뒤 Phase 2 로 넘어가야 합니다.
 
@@ -283,7 +287,8 @@ Phase 2 이후의 모든 본문 작성은 이 사전의 **재등장 열(column)*
 - [ ] `notes_kr.md` / `notes_en.md` 두 노트에 원문 1 문단당 번역 1 문단이 매핑되어 있다
 - [ ] Glossary 가 정규화 노트 상단에 생성되어 있다
 - [ ] Phase 2 이후의 모든 본문 초안이 번역본+Glossary 재등장열만 참조한다 (원문 복붙 0 건)
-- [ ] 본문 작성 후 `grep -Pc '[\x{4E00}-\x{9FFF}\x{3040}-\x{309F}\x{30A0}-\x{30FF}]' notes_kr.md` 결과가 **Glossary + 첫등장 괄호 병기 부분의 예상치와 일치** (그 외 한자/가나 0건)
+- [ ] 본문 작성 후 한자·가나가 든 줄 수가 **Glossary + 첫등장 괄호 병기 부분의 예상치와 일치** (그 외 한자/가나 0건). OS 와 무관하게 세는 법 :
+  `python3 -c "import re,sys; print(sum(1 for l in open(sys.argv[1], encoding='utf-8') if re.search('[\u4e00-\u9fff\u3040-\u30ff]', l)))" notes_kr.md`
 
 > 검증 팁: Phase 6 품질 검증에서 `verify_lang_purity.py` 가 4개 산출물에 대해 독립 한자/가나 토큰을 재확인한다.
 
@@ -312,7 +317,7 @@ VII: Devil's Advocate (비판적 관점)
 
 > 기본은 7챕터 정본. **동적 워크플로(Phase D)에서는 소스 깊이에 따라 5~9개로 가변**: 단, TOC ↔ 본문 1:1 일치 규칙은 그대로 강제됩니다 (`verify_toc.py`).
 
-### 각 챕터 내용 (insight-frameworks.md 적용: v0.9 강화)
+### 각 챕터 내용 (insight-frameworks.md 적용, v0.9 강화)
 - 소주제 H2 2~3개/챕터
 - 각 H2마다 KEY MESSAGE (완결 분석 문장 40~100자): **So-What 사다리 L2 이상**에서 도출. 사실 나열(L1) 금지. 챕터당 최소 1개는 L3(2차 효과: 수혜/피해 주체) 도달
 - 내러티브 3~4 단락 (비유·수치·맥락 필수). 수치는 **비교축 동반**(YoY/경쟁사/시장평균)
@@ -338,7 +343,7 @@ VII: Devil's Advocate (비판적 관점)
 
 ---
 
-## Phase 2.7: Deep Verification (할루시네이션 제거 게이트): **필수, v0.9 신규**
+## Phase 2.7: Deep Verification (할루시네이션 제거 게이트, **필수**, v0.9 신규)
 
 > Anthropic 동적 워크플로 블로그의 **deep verification 패턴** 적용. 상세 절차는 `references/factcheck-pipeline.md`.
 
@@ -350,20 +355,18 @@ VII: Devil's Advocate (비판적 관점)
 3. **회의 패스**: "비평가 모자"를 쓰고 verified 판정 표본을 재확인 (동적 워크플로 모드에서는 별도 skeptic 에이전트).
 4. **기계 검증**: 빌드 후 Phase 6 에서 `verify_claims.py` 가 산출물 본문의 모든 유의미 수치가 ledger 와 정합하는지 검사. 실패 시 빌드 FAIL.
 
-> 사실과 해석의 분리: 분석·전망은 claim 이 아니라 의견: "~로 해석됨", "~할 가능성이 큼" 으로 쓴다. 의견을 사실처럼 단정하지 않는다.
+> 사실과 해석의 분리: 분석·전망은 claim 이 아니라 의견이므로 「~로 해석됨」, 「~할 가능성이 큼」 으로 쓴다. 의견을 사실처럼 단정하지 않는다.
 
 ---
 
 ## Phase 3: 시각화 생성 (표지 차트 + 본문 시각요소)
 
-### NanumGothic 설치 (sandbox에서 GitHub raw 차단되므로 pip 패키지 사용)
+### NanumGothic 글꼴 (GitHub raw 가 막힌 환경에서도 되는 pip 패키지 사용, OS 무관)
 ```bash
-pip install --break-system-packages cairosvg koreanize-matplotlib 2>&1 | tail -2
-mkdir -p ~/.fonts
-NANUM=$(python3 -c "import koreanize_matplotlib, os; print(os.path.dirname(koreanize_matplotlib.__file__))")/fonts/NanumGothic.ttf
-cp "$NANUM" ~/.fonts/NanumGothic.ttf
-fc-cache -f ~/.fonts/ 2>/dev/null
-fc-list | grep -i nanum   # 확인
+python3 -m pip install koreanize-matplotlib Pillow   # 관리되는 Linux 환경이면 --break-system-packages 를 붙임
+python3 -c "import importlib.util, os; d = importlib.util.find_spec('koreanize_matplotlib').submodule_search_locations[0]; print(os.path.join(d, 'fonts'))"
+# 출력된 폴더에 NanumGothic.ttf(본문)와 NanumGothicBold.ttf(굵게)가 있음. Pillow 에는 이 경로를 그대로 넘김
+# (~/.fonts 복사와 fc-cache 는 필요 없음. 레시피는 references/visual-catalog.md 3절)
 ```
 
 ### 표지 차트 사양 (Pillow 권장)
@@ -374,7 +377,7 @@ fc-list | grep -i nanum   # 확인
   - SVG 텍스트의 `&` 문자는 반드시 `&amp;` 로 escape
 - 설계 규격: `references/docx-chart-design.md`
 
-### 본문 시각요소 (v0.9 확장: 권장 가이드)
+### 본문 시각요소 (v0.9 확장, 권장 가이드)
 
 Phase 2 의 시각화 계획표에 따라 챕터별 시각요소를 생성한다. 유형별 매핑·Pillow 레시피(박스+화살표 helper)·팔레트(#1A3A6B 계열)·삽입 규격은 `references/visual-catalog.md`. 요약:
 - 프로세스·인과 → 플로우차트 / 비교 → 표 / 수량·점유율 → 가로 막대 / 연대기 → 타임라인 / 포지셔닝 → 2×2
@@ -431,7 +434,7 @@ node --check build_en.js && node build_en.js "$WORKSPACE/{주제}_EN_Report_{YYY
 
 ---
 
-## Phase 5: PowerPoint 생성 (KR + EN): 오케스트레이터 사용
+## Phase 5: PowerPoint 생성 (KR + EN, 오케스트레이터 사용)
 
 ### STEP 1: 정본 템플릿 복사 + 내용 치환
 
@@ -500,8 +503,8 @@ bash references/build_pptx.sh en build_pptx_en.py {주제}_EN_Presentation_{YYYY
 ```
 Zone 1 y=264100   섹션헤더 (좌:챕터명#1A3A6B bold / 우:번호)
 Zone 2 y=641800   KEY MESSAGE 완결문장 (~임./~음.)
-Zone 3 y=1455150  소주제 (algn=ctr, #1A3A6B bold, u=sng) + y=1773900 cy=25400 별도 밑줄 사각형
-Zone 4 y=1850000  본문 (2단/표/막대차트/플로우차트 PNG)
+Zone 3 y=1455150  소주제 (algn=ctr, #1A3A6B bold sz=1600, 글자 밑줄 u=sng, 배경 채움 없음)
+Zone 4 y=1850000  본문 텍스트 (2단/플로우차트 PNG). 표·막대차트는 y=1790000 부터
 Zone 5 y=4715475  Source: 해당 슬라이드 수치의 출처 (claims.json 정합)
 ```
 
@@ -611,7 +614,7 @@ for f in "$WORKSPACE"/{주제}_*_{Report,Presentation}_*; do ls -la "$f" || echo
 ### 워크플로 파일
 `references/build_4set.workflow.js`: **템플릿**이다(verbatim 스크립트 아님). 소스에 맞게 단계·프롬프트·모델을 조정해 작성한다. 입력은 전역 `args`(sources, titleKR, slug, langs, docTypes, maxRetries 등).
 
-### 오케스트레이션 단계(패턴 매핑): v0.9
+### 오케스트레이션 단계(패턴 매핑, v0.9)
 ```
 A. CLASSIFY  (classify-and-act)        소스 분석 → 구조 결정.
    ★ 고정 7챕터/13장 제약을 푼다: 챕터 수를 소스 깊이에 따라 5~9개로 가변.
@@ -693,7 +696,7 @@ G. FINALIZE  (observability)            manifest.json(plan·claims 통계) 기�
 - [ ] TEMPLATE.pptx 기반 unpack/pack (python-pptx 미사용)
 - [ ] 모든 Zone helper의 `<p:nvPr>` 빈 태그
 - [ ] `rr()` 의 `u='none'` 기본값
-- [ ] Zone 3 solidFill 없음 + 별도 밑줄 사각형
+- [ ] Zone 3 solidFill 없음, 글자 밑줄(u=sng)
 - [ ] Zone 1~5 모두 존재, KEY MESSAGE 완결문장, Zone5 Source 표기
 - [ ] 영어본 전화번호 국제 표기 (profile.json PHONE_EN), 플레이스홀더 잔존 0건
 - [ ] **맺음말 슬라이드가 sldIdLst의 마지막** (오케스트레이터 자동)

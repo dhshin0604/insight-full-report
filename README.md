@@ -50,7 +50,7 @@
 | **비주얼 요약 : As-Is → To-Be 도해** | **시사점 3축 표** |
 | ![비주얼 요약](assets/deck-sample-2.png) | ![시사점](assets/deck-sample-3.png) |
 
-데모 15쪽 전체는 `python3 skills/image-deck/references/examples/demo_deck.py --out demo --example-profile` 로 직접 만들 수 있음.
+데모 15쪽 전체는 `python3 skills/image-deck/references/examples/demo_deck.py --out "$HOME/image-deck-demo" --example-profile` 로 직접 만들 수 있음(저장소 밖에 만듦).
 
 ---
 
@@ -83,6 +83,17 @@ claude plugin list                      # insight-full-report@wroding 이 보이
 - 업데이트 : `claude plugin marketplace update wroding` 다음 `claude plugin update insight-full-report@wroding` (Claude Code 를 다시 시작해야 적용)
 - 삭제 : `claude plugin uninstall insight-full-report@wroding`
 - 스크립트는 사용자 컴퓨터에서 돌기 때문에 3절의 프로그램(Python, Node 등)이 컴퓨터에 있어야 함
+- 설치 위치 : `~/.claude/plugins/cache/wroding/insight-full-report/1.0.0/` (`claude plugin list --json` 의 `installPath`). 3절의 `scripts/…` 명령은 이 폴더에서 실행
+
+```bash
+cd ~/.claude/plugins/cache/wroding/insight-full-report/1.0.0
+python3 scripts/doctor.py
+```
+
+```powershell
+cd $env:USERPROFILE\.claude\plugins\cache\wroding\insight-full-report\1.0.0
+py scripts\doctor.py
+```
 
 ### 2-2. Claude 앱 (claude.ai 웹, 데스크톱)
 
@@ -123,6 +134,8 @@ claude --plugin-dir .              # 이 폴더를 플러그인으로 불러 Cla
 
 ## 3. 설치 후 확인 / Check your setup
 
+아래 `python3 scripts/…` 는 저장소를 받은 폴더(또는 2-1 의 설치 폴더)에서 실행함. Windows 는 `python3` 대신 `py`.
+
 ### 3-1. 필요한 프로그램
 
 | 항목 | generate-full-report | image-deck | report-harness | quality-core |
@@ -135,6 +148,7 @@ claude --plugin-dir .              # 이 폴더를 플러그인으로 불러 Cla
 | img2pdf, python-pptx | | 필수 | 덱을 만들 때 | |
 | 한글 글꼴 | 미리보기 | 필수 | 미리보기 | |
 | LibreOffice (PDF 미리보기) | 선택 | | 선택 | |
+| pdftoppm (poppler, 쪽 그림 확인) | | | 선택 | |
 
 ```bash
 python3 scripts/doctor.py                      # 전체
@@ -160,13 +174,13 @@ OS 별 한 번에 설치 :
 
 ```bash
 # macOS (Homebrew)
-brew install python node
+brew install python node poppler
 npm install -g docx
 python3 -m pip install Pillow playwright img2pdf python-pptx
 python3 -m playwright install chromium
 
 # Ubuntu, Debian (apt 의 Node 가 18 미만이면 nvm 이나 NodeSource 로 올림)
-sudo apt install python3-pip nodejs npm fonts-noto-cjk libreoffice-writer libreoffice-impress
+sudo apt install python3-pip nodejs npm fonts-noto-cjk libreoffice-writer libreoffice-impress poppler-utils
 npm install -g docx
 python3 -m pip install Pillow playwright img2pdf python-pptx
 python3 -m playwright install --with-deps chromium
@@ -190,24 +204,25 @@ python3 scripts/selftest.py --only static    # 프로그램 없이 되는 정적
 python3 scripts/selftest.py --render         # LibreOffice 로 PDF 변환까지
 ```
 
-가상 프로필(홍길동, name@example.com)로 임시 폴더에서 네 스킬을 끝까지 만들고 게이트까지 돌림. 저장소 파일은 바꾸지 않음. 일부러 틀린 원고(줄표, 과장어, 출처 없는 숫자)를 넣어 게이트가 실제로 잡는지도 봄. 출력 예 :
+가상 프로필(홍길동, name@example.com)로 임시 폴더에서 네 스킬을 끝까지 만들고 게이트까지 돌림. 저장소 파일은 바꾸지 않음. 일부러 틀린 원고(줄표, 과장어, 출처 없는 숫자)와 없는 파일, 형식이 틀린 원장을 넣어 게이트가 실제로 막는지 보고, 한국어 Windows 의 cp949 출력 환경도 흉내 내어 시험함. 출력 예 :
 
 ```text
 $ python3 scripts/selftest.py
 묶음 : static, gfr, harness, deck, core, plugin
   [PASS] static   manifest               insight-full-report 1.0.0, 마켓플레이스 wroding, JSON 파일 모두 읽힘
-  [PASS] static   skill-frontmatter      generate-full-report(설명 515자, 710줄), image-deck(설명 241자, 202줄), ...
+  [PASS] static   skill-frontmatter      generate-full-report(설명 522자, 713줄), image-deck(설명 241자, 202줄), ...
   [PASS] static   referenced-files       SKILL.md, README, CHANGELOG 가 가리키는 파일이 모두 있음
   [PASS] static   lexicon-copies         2개 사본 같음 : ...
   [PASS] static   no-em-dash             배포 파일(텍스트, Office XML)에 줄표(U+2014) 0개
   [PASS] static   privacy-scan           전화, 이메일, 개인 경로, 비밀값 모양 없음 (예시 값과 작성자 이메일만 허용)
   [PASS] static   syntax                 Python 24, JS 4, Shell 2 파일 문법 OK
   [PASS] static   package-size           파일 79개, 2.0 MB (업로드 한도 5,000개, 200 MB 안)
-  [PASS] gfr      pptx-kr                13장, 게이트 toc=ok, content=ok, claims=skip, judge=skip, 언어 순도 OK
-  [PASS] gfr      pptx-en                13장, 게이트 toc=ok, content=ok, claims=skip, judge=skip, 언어 순도 OK
-  [PASS] gfr      word-kr                게이트 toc=skip, content=ok, claims=skip, judge=skip, 언어 순도 OK
-  [PASS] gfr      word-en                게이트 toc=skip, content=ok, claims=skip, judge=skip, 언어 순도 OK
-  [PASS] gfr      gate-catches           줄표와 과장어를 넣은 EN 슬라이드에서 DASH, HYPE_HARD 검출, 게이트 실패
+  [PASS] gfr      pptx-kr                13장, 게이트 toc=ok, content=ok, ..., 언어 순도 OK, 원장 대조 OK (본문 수치 23개 등록)
+  [PASS] gfr      pptx-en                13장, 게이트 toc=ok, content=ok, ..., 언어 순도 OK, 원장 대조 OK (본문 수치 23개 등록)
+  [PASS] gfr      word-kr                게이트 toc=skip, content=ok, ..., 언어 순도 OK, 원장 대조 OK (본문 수치 23개 등록)
+  [PASS] gfr      word-en                게이트 toc=skip, content=ok, ..., 언어 순도 OK, 원장 대조 OK (본문 수치 24개 등록)
+  [PASS] gfr      gate-catches           줄표와 과장어를 넣은 EN 슬라이드에서 DASH, HYPE_HARD 검출, 없는 DOCX 와 틀린 claims.json 도 실패 처리
+  [PASS] gfr      cp949-pipe             cp949 파이프에서도 6개 스크립트가 멈추지 않고, 나쁜 PPTX 는 그대로 실패
   [PASS] harness  selfcheck              PASS
   [PASS] harness  assemble               content.json, claims.json (claim 35개)
   [PASS] harness  build-docx             report.docx 192 KB
@@ -217,7 +232,7 @@ $ python3 scripts/selftest.py
   [PASS] core     claims-lite            맞는 초안 통과, 틀린 초안에서 REMOVED_LEAK, NUM_UNREG 검출
   [PASS] plugin   validate               claude plugin validate --strict 통과
 
-결과 : PASS 21, FAIL 0, SKIP 0 (9초)
+결과 : PASS 22, FAIL 0, SKIP 0 (22초)
 ```
 
 - SKIP 은 그 기능에 필요한 프로그램이 없다는 뜻. FAIL 이 있으면 작업 폴더를 남기고 경로를 알려 줌
@@ -380,7 +395,10 @@ P8 전달 ← P7 독립 검토 ← P6 게이트·재시도 ← P5 빌드(그림 
 | 덱이나 미리보기에서 한글이 네모로 나옴 | 한글 글꼴 없음 | Linux `sudo apt install fonts-noto-cjk`. macOS, Windows 는 기본 글꼴로 됨 |
 | Windows 에서 `build_pptx.sh` 가 안 돎 | bash 없음, 또는 `python3` 명령 없음 | Git Bash 에서 `PYTHON=python bash references/build_pptx.sh …` |
 | PowerPoint 가 「읽을 수 없습니다」 | 다중 자리표시, 또는 Google Slides 잔존물 | `build_pptx.sh` 를 거쳐 빌드했는지 확인. 마지막 줄이 `Google 잔존물 0, metadata 0` 이어야 함 |
-| `NUM_UNREG 1.1` 처럼 헤딩 번호가 미등록 숫자로 잡힘 | 메타 claim 없이 게이트를 돌림 | report-harness 는 `assemble.py` 가 만든 `claims.json` 을 씀 |
+| claims 게이트가 `NUM_UNREG` 로 실패 | 본문 숫자가 원장(`claims.json`)에 없음 | 원문을 확인해 claim 으로 등록하거나 본문에서 뺌. 헤딩 번호, 캡션·질문 번호, 날짜는 v1.0 부터 검사에서 빠짐 |
+| PPTX 빌드가 verify_toc 에서 멈추고 「슬라이드 목록에 없는 본문」 또는 「빈 슬라이드」 | `N_CONTENT` 가 빌드 스크립트의 본문 슬라이드 수와 다름 | 메시지에 나온 수만큼 `N_CONTENT` 를 늘리거나 줄여 다시 빌드 (전체 장 수 - 5) |
+| 게이트가 `GATE_ERROR` 로 실패 | 대상 파일이 없거나, 형식이 틀린 `claims.json`, 게이트 스크립트 오류 | 메시지대로 고친 뒤 다시 실행. 게이트가 돌지 못한 결과는 통과로 치지 않음 |
+| 빌드가 종료코드 2 로 「PROFILE 이 가리키는 파일이 없음」 | 환경변수 `PROFILE` 경로가 틀림 | 경로를 고치거나 `PROFILE` 을 지우고 작업 폴더에 `profile.json` 을 둠 |
 | report-harness 가 「게이트 없음」이라고 함 | 스킬을 따로 올려 형제 스킬을 못 찾음 | 플러그인으로 설치하거나 세 스킬을 함께 올림 |
 | claude.ai 업로드가 `plugin.json must be at .claude-plugin/plugin.json …` 로 거부됨 | zip 안 폴더가 한 단계 더 깊거나 다른 파일이 옆에 있음 | `python3 scripts/package.py` 로 다시 묶음 |
 | 스킬 하나 업로드가 거부됨 | `SKILL.md` 가 zip 맨 위에 있음 | 스킬 폴더째 묶음 (`dist/skills/*.zip`) |

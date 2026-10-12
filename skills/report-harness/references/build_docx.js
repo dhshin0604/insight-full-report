@@ -53,7 +53,8 @@ if (!/\.docx$/i.test(OUT_PATH)) die(EXIT_INPUT, '[오류] 출력 파일은 .docx
 
 // ─── docx 패키지 ─────────────────────────────────────────────────────────────
 function loadDocx() {
-  try { return require('docx'); } catch (e) { /* 아래에서 전역 폴더를 찾음 */ }
+  try { return require('docx'); } catch (e) { /* 아래에서 작업 폴더와 전역 폴더를 찾음 */ }
+  try { return require(require.resolve('docx', { paths: [process.cwd()] })); } catch (e) { /* 작업 폴더의 node_modules */ }
   try {
     const root = require('child_process').execSync('npm root -g',
       { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 15000 }).trim();
@@ -63,7 +64,7 @@ function loadDocx() {
     '[오류] npm 패키지 docx 를 찾지 못함.',
     '  설치 : npm install -g docx',
     '  실행 : NODE_PATH="$(npm root -g)" node build_docx.js content.json out.docx',
-    '  (전역 설치가 막혀 있으면 작업 폴더에서 npm install docx 후 같은 폴더에서 실행)',
+    '  (전역 설치가 막혀 있으면 작업 폴더에서 npm install docx 후 그 폴더에서 실행 : 작업 폴더의 node_modules 도 찾음)',
   ].join('\n'));
 }
 
@@ -93,7 +94,7 @@ function loadProfile() {
   for (const c of cands) {
     if (!fs.existsSync(c.p)) { tried.push(`  - ${c.p} (${c.why}) : 없음`); continue; }
     let d;
-    try { d = JSON.parse(fs.readFileSync(c.p, 'utf8')); } catch (e) {
+    try { d = JSON.parse(fs.readFileSync(c.p, 'utf8').replace(/^\uFEFF/, '')); } catch (e) {  // BOM(메모장, PowerShell 5) 허용
       die(EXIT_PROFILE, `[프로필] profile.json 을 읽지 못함 (${c.p}) : ${e.message}`);
     }
     const prof = {};
@@ -248,7 +249,7 @@ function validate(c) {
 
 // ─── 메인 ────────────────────────────────────────────────────────────────────
 let content;
-try { content = JSON.parse(fs.readFileSync(CONTENT_PATH, 'utf8')); } catch (e) {
+try { content = JSON.parse(fs.readFileSync(CONTENT_PATH, 'utf8').replace(/^\uFEFF/, '')); } catch (e) {
   die(EXIT_INPUT, `[오류] content.json 을 읽지 못함 (${CONTENT_PATH}) : ${e.message}`);
 }
 {

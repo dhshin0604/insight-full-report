@@ -7,7 +7,7 @@
 | 캔버스 크기 | 900 × 1020 px |
 | 배경색 | #F0F4FA |
 | 렌더링 | cairosvg → PNG |
-| 한국어 폰트 | NanumGothic (fontconfig 등록 필요) |
+| 한국어 폰트 | NanumGothic (Linux 는 fontconfig 등록, Windows·macOS 는 기본 한글 글꼴로 대체) |
 | 영어 폰트 | Arial, Helvetica, sans-serif |
 | DOCX 이미지 삽입 크기 | width=540, height=612 pt |
 
@@ -16,16 +16,16 @@
 ## NanumGothic 폰트 설치 (한국어 차트용, 최초 1회)
 
 ```bash
-pip install cairosvg --break-system-packages 2>/dev/null
-mkdir -p ~/.fonts
-# NanumGothic.ttf가 없으면:
-# wget -q -O ~/.fonts/NanumGothic.ttf "https://github.com/naver/nanumfont/raw/master/NanumGothic.ttf"
+python3 -m pip install cairosvg koreanize-matplotlib   # 관리되는 Linux 환경이면 --break-system-packages
+# Linux : cairosvg 는 글꼴을 fontconfig 로 찾으므로 패키지에 든 NanumGothic(본문, 굵게)을 사용자 글꼴 폴더에 등록
+python3 -c "import importlib.util, os, glob, shutil; d = os.path.join(importlib.util.find_spec('koreanize_matplotlib').submodule_search_locations[0], 'fonts'); t = os.path.expanduser('~/.fonts'); os.makedirs(t, exist_ok=True); [shutil.copy(f, t) for f in glob.glob(os.path.join(d, 'NanumGothic*.ttf'))]"
 fc-cache -f ~/.fonts/ 2>/dev/null
+# Windows, macOS : 아래 font-family 의 기본 한글 글꼴(Malgun Gothic, Apple SD Gothic Neo)이 쓰임
 ```
 
 SVG CSS에서:
 ```xml
-<style>text { font-family: NanumGothic, Arial, sans-serif; }</style>
+<style>text { font-family: NanumGothic, 'Malgun Gothic', 'Apple SD Gothic Neo', Arial, sans-serif; }</style>
 ```
 
 ---

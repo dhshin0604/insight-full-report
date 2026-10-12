@@ -27,6 +27,13 @@ import re
 import sys
 import zipfile
 
+# Windows 의 cp949·cp1252 콘솔과 파이프에서도 출력 때문에 멈추지 않게 UTF-8 로 맞춤
+for _stdio in (sys.stdout, sys.stderr):
+    try:
+        _stdio.reconfigure(encoding='utf-8', errors='replace')
+    except (AttributeError, ValueError):
+        pass
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SK = os.path.join(ROOT, 'skills')
 EXCLUDE_DIRS = {'.git', 'dist', '__pycache__', 'node_modules', '.venv', 'venv', '.idea', '.vscode'}

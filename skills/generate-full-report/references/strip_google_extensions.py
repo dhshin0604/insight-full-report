@@ -22,6 +22,13 @@ TEMPLATE.pptx가 Google Slides에서 export된 경우 `<p:extLst>` 안에
 """
 import os, re, sys, shutil, zipfile, tempfile
 
+# Windows 의 cp949·cp1252 콘솔과 파이프에서도 출력 때문에 멈추지 않게 UTF-8 로 맞춤
+for _stdio in (sys.stdout, sys.stderr):
+    try:
+        _stdio.reconfigure(encoding='utf-8', errors='replace')
+    except (AttributeError, ValueError):
+        pass
+
 
 def strip_unpacked(root):
     """unpack된 디렉터리 root 내부에서 Google 잔존물 제거. 변경 건수 반환."""

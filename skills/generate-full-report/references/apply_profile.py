@@ -38,6 +38,13 @@ import os
 import re
 import sys
 
+# Windows 의 cp949·cp1252 콘솔과 파이프에서도 출력 때문에 멈추지 않게 UTF-8 로 맞춤
+for _stdio in (sys.stdout, sys.stderr):
+    try:
+        _stdio.reconfigure(encoding='utf-8', errors='replace')
+    except (AttributeError, ValueError):
+        pass
+
 REQUIRED = ['AUTHOR_KR', 'AUTHOR_EN', 'PHONE_KR', 'PHONE_EN', 'EMAIL']
 OPTIONAL = ['WORKSPACE_ROOT', 'WORKSPACE_DIRNAME', 'BRAND']
 KEYS = REQUIRED + OPTIONAL
@@ -48,7 +55,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 
 def _read(path):
     try:
-        with open(path, encoding='utf-8') as f:
+        with open(path, encoding='utf-8-sig') as f:   # BOM(메모장, PowerShell 5) 허용
             return json.load(f)
     except (OSError, ValueError):
         return None
@@ -58,7 +65,12 @@ def resolve_profile_path(explicit=None):
     """쓸 profile.json 을 고른다. 필수 키가 모두 찬 파일 > 존재하는 첫 파일."""
     if explicit:
         return explicit
-    cands = [c for c in (os.environ.get('PROFILE'),
+    env = os.environ.get('PROFILE')
+    if env and not os.path.isfile(env):
+        sys.stderr.write('[프로필] 환경변수 PROFILE 이 가리키는 파일이 없음 : %s\n'
+                         '  해결 : 경로를 고치거나 PROFILE 을 지우고 작업 폴더에 profile.json 을 둠\n' % os.path.abspath(env))
+        sys.exit(2)
+    cands = [c for c in (env,
                          os.path.join(os.getcwd(), 'profile.json'),
                          os.path.join(HERE, 'profile.json')) if c]
     existing = [c for c in cands if os.path.isfile(c)]
@@ -72,8 +84,16 @@ def resolve_profile_path(explicit=None):
 def load_profile(path, sets):
     prof = {k: '' for k in KEYS}
     if path and os.path.isfile(path):
-        with open(path, encoding='utf-8') as f:
-            data = json.load(f)
+        try:
+            with open(path, encoding='utf-8-sig') as f:   # BOM 허용
+                data = json.load(f)
+        except ValueError as e:
+            sys.stderr.write('[프로필] profile.json 을 읽지 못함 (%s) : %s\n'
+                             '  해결 : JSON 형식(쉼표, 큰따옴표, 중괄호)을 확인. 예시는 references/profile.json 의 _examples\n' % (path, e))
+            sys.exit(2)
+        if not isinstance(data, dict):
+            sys.stderr.write('[프로필] profile.json 최상위가 {...} 가 아님 : %s\n' % path)
+            sys.exit(2)
         for k in KEYS:
             v = data.get(k, '')
             prof[k] = str(v).strip() if v is not None else ''
@@ -149,7 +169,7 @@ def main():
 
     if replaced:
         print('apply_profile: 치환 완료: ' + ', '.join(f'{k}×{n}' for k, n in replaced.items()))
-    elif not args.check:
+    elif not args.check and not leftovers:
         print('apply_profile: 치환할 플레이스홀더 없음 (이미 치환됨)')
 
     if leftovers:

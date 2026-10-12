@@ -13,7 +13,7 @@
 | Python | 3.9+ |
 | PIL/Pillow | `pip install Pillow` (관리되는 환경이면 `--break-system-packages` 를 붙임) |
 | cairosvg (선택) | `pip install cairosvg` |
-| NanumGothic.ttf | ~/.fonts/ (fontconfig 등록) |
+| NanumGothic.ttf | pip 패키지 koreanize-matplotlib 의 fonts 폴더 (SKILL.md Phase 3, OS 무관) |
 
 ```bash
 # 환경 확인
@@ -288,8 +288,8 @@ BK(), PB(),
 
 ```javascript
 PB(),
-H1('Chapter I. {챕터 제목}'),
-H2('1.1 {소주제}'),
+H1C('{챕터 제목}'),      // 빌드가 「1. {챕터 제목}」 으로 번호를 붙임 (H1 에 번호를 직접 쓰면 HEADNUM 게이트 실패)
+H2C('{소주제}'),         // 「1.1 {소주제}」
 textBox('KEY MESSAGE', [
   P(N('완결 분석 문장. ~입니다 어미. 40~100자. 비유나 수치 포함.')),
 ]),
@@ -445,7 +445,7 @@ const H2C = (t) => { _sec += 1; return H2(`${_ch}.${_sec} ${t}`); };      // "1.
 | 챕터 내 소제목 | `H2C('소제목')` | `1.1`, `1.2`, `2.1` … |
 | Executive Summary / 핵심 질문과 답변 / 맺음말 / 참고 자료 / 핵심 키워드 | `H1()`/`H2()` (번호 없음) | 그대로 |
 
-- 챕터 순서를 바꾸거나 추가/삭제해도 번호는 자동 재배열된다: 텍스트에 번호를 직접 쓰지 말 것.
+- 챕터 순서를 바꾸거나 추가/삭제해도 번호는 자동 재배열되므로 텍스트에 번호를 직접 쓰지 않는다.
 - `verify_content.py` 의 **HEADNUM 게이트(ERROR)** 가 검사한다: 번호 없는 챕터 H1,
   챕터-소제목 번호 불일치(예: 2장 아래 `1.3`), 번호 순서 오류(1..N 연속 위반).
 - PPTX TOC(로마숫자 I~VII)와 Word 번호(1~7)는 표기만 다르고 챕터 구성은 동일해야 한다.

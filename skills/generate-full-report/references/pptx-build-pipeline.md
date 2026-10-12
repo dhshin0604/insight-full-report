@@ -183,8 +183,8 @@ def zone_keymsg(msg, lang='ko'):
     )
 
 def zone_subhd(heading, lang='ko'):
-    """Zone 3: 소주제 제목. 중앙정렬, navy bold, 밑줄(u=sng), fill 없음.
-    ⚠️ ph 없음, solidFill 배경 금지, 별도 밑줄 사각형 추가."""
+    """Zone 3: 소주제 제목. 중앙정렬, navy bold, 글자 밑줄(u=sng), fill 없음 (정본 템플릿의 z3 와 같음).
+    ⚠️ ph 없음, solidFill 배경 금지."""
     return (
         f'    <p:sp><p:nvSpPr><p:cNvPr id="13" name="zone3_subhd"/>'
         f'<p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr>'
@@ -195,14 +195,7 @@ def zone_subhd(heading, lang='ko'):
         f'<a:p><a:pPr algn="ctr"><a:spcBef><a:spcPts val="0"/></a:spcBef>'
         f'<a:spcAft><a:spcPts val="0"/></a:spcAft><a:buNone/></a:pPr>'
         f'{rr(heading, sz=1600, bold=True, color="1A3A6B", lang=lang, u="sng")}<a:endParaRPr/></a:p>'
-        f'</p:txBody></p:sp>\n'
-        f'    <p:sp><p:nvSpPr><p:cNvPr id="130" name="zone3_underline"/>'
-        f'<p:cNvSpPr/><p:nvPr/></p:nvSpPr>'
-        f'<p:spPr><a:xfrm><a:off x="162800" y="1773900"/><a:ext cx="8818500" cy="25400"/></a:xfrm>'
-        f'<a:prstGeom prst="rect"><a:avLst/></a:prstGeom>'
-        f'<a:solidFill><a:srgbClr val="1A3A6B"/></a:solidFill>'
-        f'<a:ln><a:noFill/></a:ln></p:spPr>'
-        f'<p:txBody><a:bodyPr/><a:lstStyle/></p:txBody></p:sp>'
+        f'</p:txBody></p:sp>'
     )
 
 def zone_body(paragraphs_xml, top=1850000, height=2780000, lang='ko'):
@@ -277,11 +270,12 @@ def save_slide(n, xml):
     with open(os.path.join(SLIDES_DIR, f'slide{n}.xml'), 'w', encoding='utf-8') as f:
         f.write(xml)
 
-# 예시: 본문 슬라이드
+# 예시: 본문 슬라이드. zone_hdr 왼쪽은 반드시 「로마숫자. 챕터명」 (verify_toc 가 INDEX 와 1:1 로 대조함)
+# 정본 템플릿(build_pptx_kr.template.py)에는 같은 역할의 함수가 sld, z1~z5, pp_b, save 이름으로 들어 있음
 save_slide(3, sld_wrap(
-    zone_hdr('Chapter I. 개요 및 배경', 'I-1', lang='ko') +
+    zone_hdr('I. 개요 및 배경', '① 연구 배경', lang='ko') +
     zone_keymsg('구현 AI는 물리 세계 AI의 임계점에 도달하고 있음.', lang='ko') +
-    zone_subhd('1.1 연구 배경', lang='ko') +
+    zone_subhd('1. 연구 배경', lang='ko') +
     zone_body(
         pp(rr('배경 텍스트', sz=1200, lang='ko')) +
         pp_bullet(rr('핵심 사실 1', sz=1100, lang='ko')),

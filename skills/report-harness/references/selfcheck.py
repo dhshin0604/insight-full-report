@@ -55,11 +55,10 @@ if HERE not in sys.path:
     sys.path.insert(0, HERE)
 import wb  # noqa: E402
 
-if hasattr(sys.stdout, "reconfigure"):
+for _stdio in (sys.stdout, sys.stderr):  # Windows cp949·cp1252 에서도 멈추지 않게 UTF-8 로 맞춤
     try:
-        sys.stdout.reconfigure(errors="replace")
-        sys.stderr.reconfigure(errors="replace")
-    except Exception:
+        _stdio.reconfigure(encoding="utf-8", errors="replace")
+    except (AttributeError, ValueError):
         pass
 
 ORDER = ["schema", "auto_number", "bullets", "cjk_bare", "dates", "hype_hard", "hype_soft", "eval_terms",
@@ -389,7 +388,7 @@ def main():
 
     if json_mode:
         try:
-            with open(a.json_path, encoding="utf-8") as f:
+            with open(a.json_path, encoding="utf-8-sig") as f:
                 content = json.load(f)
         except (OSError, ValueError) as e:
             die("content.json 을 읽지 못함 : %s" % e)
@@ -398,7 +397,7 @@ def main():
         cpath = a.claims or os.path.join(os.path.dirname(os.path.abspath(a.json_path)), "claims.json")
         if os.path.isfile(cpath):
             try:
-                with open(cpath, encoding="utf-8") as f:
+                with open(cpath, encoding="utf-8-sig") as f:
                     led = json.load(f)
             except (OSError, ValueError) as e:
                 die("claims.json 을 읽지 못함 : %s" % e)

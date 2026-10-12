@@ -15,6 +15,13 @@ import html
 import os
 import sys
 
+# Windows 의 cp949·cp1252 콘솔과 파이프에서도 출력 때문에 멈추지 않게 UTF-8 로 맞춤
+for _stdio in (sys.stdout, sys.stderr):
+    try:
+        _stdio.reconfigure(encoding='utf-8', errors='replace')
+    except (AttributeError, ValueError):
+        pass
+
 FONT = "'Noto Sans CJK KR','Noto Sans KR','NanumGothic','Malgun Gothic','Apple SD Gothic Neo',sans-serif"
 RED, NAVY, GREY, LIGHT, INK = "#A31D1D", "#1A3A6B", "#8A8A8A", "#BDBDBD", "#1A1A1A"
 esc = lambda s: html.escape(str(s), quote=False)

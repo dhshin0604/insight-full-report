@@ -16,6 +16,13 @@
 """
 import argparse, json, re, sys, unicodedata
 
+# Windows 의 cp949·cp1252 콘솔과 파이프에서도 출력 때문에 멈추지 않게 UTF-8 로 맞춤
+for _stdio in (sys.stdout, sys.stderr):
+    try:
+        _stdio.reconfigure(encoding='utf-8', errors='replace')
+    except (AttributeError, ValueError):
+        pass
+
 YEAR_RE = re.compile(r"^(19|20)\d{2}$")
 NUM_RE = re.compile(r"\d[\d,\.]*")
 EST_MARKS = ("추정", "est.", "Est.", "EST.", "전망치")
@@ -67,9 +74,11 @@ def main():
     ap.add_argument("--text", required=True)
     args = ap.parse_args()
 
-    ledger = json.load(open(args.claims, encoding="utf-8"))
+    with open(args.claims, encoding="utf-8-sig") as f:
+        ledger = json.load(f)
     claims = ledger.get("claims", [])
-    body = norm(open(args.text, encoding="utf-8").read())
+    with open(args.text, encoding="utf-8-sig") as f:
+        body = norm(f.read())
 
     errors, warns = [], []
 

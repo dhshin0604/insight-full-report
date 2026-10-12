@@ -126,9 +126,9 @@ def _run_json_gate(name, cmd):
             os.unlink(path)
         except OSError:
             pass
-    if p.returncode not in (0, 1):
+    if p.returncode not in (0, 1) or (rep.get('pass') and p.returncode != 0):
         return _gate_error(name, '%s 게이트 비정상 종료(%d) : %s' % (name, p.returncode, _tail(p)),
-                           '오류 내용을 고친 뒤 다시 실행')
+                           '오류 내용을 고친 뒤 다시 실행. 통과 리포트를 쓰고 비정상 종료한 결과는 믿지 않음')
     fixes = [{'type': e.get('type'), 'loc': e.get('loc'), 'detail': e.get('detail'), 'fix': e.get('fix')}
              for e in rep.get('errors', [])]
     return ('ok' if rep.get('pass') else 'fail', 'ERROR %d / WARNING %d'

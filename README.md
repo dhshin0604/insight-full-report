@@ -221,7 +221,7 @@ $ python3 scripts/selftest.py
   [PASS] gfr      pptx-en                13장, 게이트 toc=ok, content=ok, ..., 언어 순도 OK, 원장 대조 OK (본문 수치 23개 등록)
   [PASS] gfr      word-kr                게이트 toc=skip, content=ok, ..., 언어 순도 OK, 원장 대조 OK (본문 수치 23개 등록)
   [PASS] gfr      word-en                게이트 toc=skip, content=ok, ..., 언어 순도 OK, 원장 대조 OK (본문 수치 24개 등록)
-  [PASS] gfr      gate-catches           줄표와 과장어를 넣은 EN 슬라이드에서 DASH, HYPE_HARD 검출, 없는 DOCX 와 틀린 claims.json 도 실패 처리
+  [PASS] gfr      gate-catches           줄표와 과장어 EN 슬라이드에서 DASH, HYPE_HARD 검출, 없는 DOCX·틀린 claims.json·VIII 장 누락도 실패
   [PASS] gfr      cp949-pipe             cp949 파이프에서도 6개 스크립트가 멈추지 않고, 나쁜 PPTX 는 그대로 실패
   [PASS] harness  selfcheck              PASS
   [PASS] harness  assemble               content.json, claims.json (claim 35개)
@@ -396,7 +396,7 @@ P8 전달 ← P7 독립 검토 ← P6 게이트·재시도 ← P5 빌드(그림 
 | Windows 에서 `build_pptx.sh` 가 안 돎 | bash 없음, 또는 `python3` 명령 없음 | Git Bash 에서 `PYTHON=python bash references/build_pptx.sh …` |
 | PowerPoint 가 「읽을 수 없습니다」 | 다중 자리표시, 또는 Google Slides 잔존물 | `build_pptx.sh` 를 거쳐 빌드했는지 확인. 마지막 줄이 `Google 잔존물 0, metadata 0` 이어야 함 |
 | claims 게이트가 `NUM_UNREG` 로 실패 | 본문 숫자가 원장(`claims.json`)에 없음 | 원문을 확인해 claim 으로 등록하거나 본문에서 뺌. 헤딩 번호, 캡션·질문 번호, 날짜는 v1.0 부터 검사에서 빠짐 |
-| PPTX 빌드가 verify_toc 에서 멈추고 「슬라이드 목록에 없는 본문」 또는 「빈 슬라이드」 | `N_CONTENT` 가 빌드 스크립트의 본문 슬라이드 수와 다름 | 메시지에 나온 수만큼 `N_CONTENT` 를 늘리거나 줄여 다시 빌드 (전체 장 수 - 5) |
+| PPTX 빌드가 verify_toc 에서 멈추고 「슬라이드 목록에 없는 슬라이드」 또는 「빈 슬라이드」 | `N_CONTENT` 가 빌드 스크립트의 본문 슬라이드 수와 다름 | 메시지에 나온 수만큼 `N_CONTENT` 를 늘리거나 줄여 다시 빌드 (전체 장 수 - 5) |
 | 게이트가 `GATE_ERROR` 로 실패 | 대상 파일이 없거나, 형식이 틀린 `claims.json`, 게이트 스크립트 오류 | 메시지대로 고친 뒤 다시 실행. 게이트가 돌지 못한 결과는 통과로 치지 않음 |
 | 빌드가 종료코드 2 로 「PROFILE 이 가리키는 파일이 없음」 | 환경변수 `PROFILE` 경로가 틀림 | 경로를 고치거나 `PROFILE` 을 지우고 작업 폴더에 `profile.json` 을 둠 |
 | report-harness 가 「게이트 없음」이라고 함 | 스킬을 따로 올려 형제 스킬을 못 찾음 | 플러그인으로 설치하거나 세 스킬을 함께 올림 |

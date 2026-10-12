@@ -2,7 +2,7 @@
 """
 verify_toc.py: TOC ↔ 본문 챕터 일치 검증
 
-PPTX의 INDEX 슬라이드(보이는 순서로 두 번째, 정본은 slide2)에 나열된 로마숫자 챕터(I~VII 등)와
+PPTX의 INDEX 슬라이드(보이는 순서로 두 번째, 정본은 slide2)에 나열된 로마숫자 챕터(I~XII)와
 본문 슬라이드(z1 헤더의 좌측 텍스트)에서 추출한 챕터 라벨이 1:1로 매칭되는지 검사한다.
 슬라이드 순서는 파일 번호가 아니라 presentation.xml 의 sldIdLst(실제 보이는 순서)를 따름.
 누락, 순서 불일치, 중복, 빈 슬라이드, 슬라이드 목록 밖의 본문이 있으면 종료코드 1.
@@ -26,7 +26,7 @@ for _stdio in (sys.stdout, sys.stderr):
 
 NS_A = '{http://schemas.openxmlformats.org/drawingml/2006/main}'
 NS_P = '{http://schemas.openxmlformats.org/presentationml/2006/main}'
-ROMAN_RE = re.compile(r'^\s*((?:VII|VI|IV|V|III|II|I))\.')
+ROMAN_RE = re.compile(r'^\s*(XII|XI|X|IX|VIII|VII|VI|V|IV|III|II|I)\.')   # 동적 워크플로 5~9장 + 여유(긴 것부터)
 
 
 def slide_text_runs(path):
@@ -132,9 +132,11 @@ def main():
         errs.append(f'❌ 빈 슬라이드 {blank} : N_CONTENT 가 빌드 스크립트의 본문 슬라이드 수보다 큼')
     # 목록 밖 슬라이드 : 빌드 스크립트가 썼지만 sldIdLst 에 없음 (N_CONTENT 가 작음, clean 이 지움)
     on_disk = [f for f in os.listdir(slides_dir) if re.match(r'slide\d+\.xml$', f)]
-    lost = sorted((f for f in on_disk if f not in order and first_roman(os.path.join(slides_dir, f))), key=_num)
+    lost = sorted((f for f in on_disk if f not in order
+                   and any(t.strip() for t in slide_text_runs(os.path.join(slides_dir, f)))), key=_num)
     if lost:
-        errs.append(f'❌ 슬라이드 목록에 없는 본문 {lost} : N_CONTENT 를 {len(lost)} 늘려 다시 빌드 (지금 묶으면 이 슬라이드가 빠짐)')
+        errs.append(f'❌ 슬라이드 목록에 없는 슬라이드 {lost} : 빌드 스크립트가 썼지만 목록에 없음. '
+                    f'N_CONTENT 를 {len(lost)} 늘려 다시 빌드 (지금 묶으면 이 슬라이드가 빠짐)')
 
     if not toc:
         errs.append('TOC가 비어 있음 (slide2.xml에서 로마숫자 챕터를 찾지 못함)')

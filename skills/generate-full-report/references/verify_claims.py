@@ -15,9 +15,10 @@ claims.json(Claims Ledger)과 빌드 산출물(docx 또는 unpacked pptx)을 대
 
 수치로 보지 않는 것 (v1.0) : 문서 구조가 만드는 번호와 날짜
   - 연도 단독(1900~2099), 전화번호, 12 이하의 정수(항번호·소량 수사)
-  - Word 헤딩(Heading·Title·TOC 스타일) 맨 앞의 장·절 번호 : "1.", "1.1", "2.3.1"
+  - Word 헤딩 맨 앞의 장·절 번호 : 1. → 1.1 → 1.2 → 2. 처럼 카운터와 맞는 번호만 (목차 줄은 같은 번호일 때만)
   - 캡션 번호 : [표 3], [그림 12], [Table 3], [Figure 12], 질문 번호 Q13.
-  - 날짜 : 2026.04.08, 2026-10-12, 2026/10, 2026년 10월 12일, 10월 12일, October 12, 2026, 12 Oct 2026
+  - 날짜 : 2026.04.08, 2026-10-12, 2026/10, 2025.12 기준(연.월 뒤에 기준·말·현재 등), 2026년 10월 12일, 10월 12일,
+    October 12, 2026, 12 Oct 2026
   사건의 날짜가 맞는지는 원장(claims.json)의 text 와 2차 검증·독립 검토가 맡음
 
 사용:
@@ -46,10 +47,13 @@ EST_KR = ['추정', '전망치', '외삽']
 EST_EN = ['est.', 'estimate', 'projected', 'extrapolat']
 
 
-MONTHS = r'(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)[a-z]*\.?'
+MONTHS = (r'(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|June?|July?|Aug(?:ust)?'
+          r'|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?(?![A-Za-z])')
 DATE_RES = [
     re.compile(r'(?<![\d.])(?:19|20)\d{2}\s*([.\-/])\s*(?:0?[1-9]|1[0-2])\s*\1\s*(?:0?[1-9]|[12]\d|3[01])(?!\d)\.?'),  # 2026.04.08
-    re.compile(r'(?<![\d.])(?:19|20)\d{2}\.(?:0[1-9]|1[0-2])(?![\d.%])(?!\s*(?:억|조|만|천|원|달러|배|위안|엔|MW|GW|kW|km|kg|t\b))'),  # 2026.04 (두 자리 월)
+    # 2025.12 기준 : 연.월(두 자리) 뒤에 날짜를 뜻하는 말이 올 때만 날짜로 봄 (2025.10 TWh 같은 수량은 그대로 검사)
+    re.compile(r'(?<![\d.])(?:19|20)\d{2}\.(?:0[1-9]|1[0-2])(?=\s*(?:기준|말|초|중순|현재|발표|출시|공개|시점|부터|까지|이후|이전|~|〜))'),
+    re.compile(r'(?<=[~〜])\s*(?:19|20)\d{2}\.(?:0[1-9]|1[0-2])(?![\d.])'),                                    # 2024.01~2025.12 의 뒤쪽
     re.compile(r'(?<![\d.])(?:19|20)\d{2}[-/](?:0?[1-9]|1[0-2])(?![\d.])'),                                            # 2026-10, 2026/10
     re.compile(r'(?<!\d)(?:19|20)\d{2}\s*년\s*\d{1,2}\s*월(?:\s*\d{1,2}\s*일)?'),               # 2026년 10월 12일
     re.compile(r'(?<!\d)\d{1,2}\s*월\s*\d{1,2}\s*일'),                                          # 10월 12일
@@ -60,6 +64,37 @@ CAPTION_RE = re.compile(r'\[\s*(?:표|그림|Table|Figure|Fig\.)\s*\d+\s*\]', re
 QNUM_RE = re.compile(r'(?<![A-Za-z0-9])Q\d{1,2}(?=[.:)\s])')   # 핵심 질문 번호 Q1. Q13:
 OUTLINE_RE = re.compile(r'^\s*\d+(?:\.\d+)*\.?(?=\s)')
 HEADING_STYLE_RE = re.compile(r'^(?:heading|title|toc|subtitle)', re.I)
+
+
+def outline_paragraphs(paras):
+    """장·절 번호 카운터와 맞는 헤딩 문단의 번호만 구조 숫자로 봄 : 1. → 1.1 → 1.2 → 2. → 2.1 ...
+    번호 없는 헤딩이 「3.5 GW 시대」처럼 수량으로 시작하면 카운터와 맞지 않으므로 그대로 검사함.
+    목차(TOC 스타일) 줄은 앞의 번호가 실제 헤딩 번호와 같을 때만 뺌."""
+    keep, seen = set(), set()
+    h = [0, 0, 0]
+    for idx, (_, text, style) in enumerate(paras):
+        st = (style or '').lower().replace(' ', '')
+        m = re.match(r'\s*(\d+)(?:\.(\d+))?(?:\.(\d+))?\.?(?=\s)', text)
+        if not m or not st.startswith('heading'):
+            continue
+        nums = [int(x) for x in m.groups() if x is not None]
+        level = len(nums)
+        if level == 1 and st == 'heading1' and nums[0] == h[0] + 1:
+            h = [nums[0], 0, 0]
+        elif level == 2 and st == 'heading2' and nums[0] == h[0] and nums[1] == h[1] + 1:
+            h = [h[0], nums[1], 0]
+        elif level == 3 and st == 'heading3' and nums[:2] == h[:2] and nums[2] == h[2] + 1:
+            h = [h[0], h[1], nums[2]]
+        else:
+            continue
+        keep.add(idx)
+        seen.add(m.group(0).strip().rstrip('.'))
+    for idx, (_, text, style) in enumerate(paras):
+        st = (style or '').lower().replace(' ', '')
+        m = re.match(r'\s*(\d+(?:\.\d+)*)\.?(?=\s)', text)
+        if st.startswith('toc') and m and m.group(1) in seen:
+            keep.add(idx)
+    return keep
 
 
 def strip_structural(text, heading=False):
@@ -85,18 +120,19 @@ def texts_from_unpacked(base):
 
 
 def texts_from_docx(path):
-    """[(위치, 문단 텍스트, 헤딩 여부)] : 위치는 p{문단 번호}, 헤딩은 Heading·Title·TOC 스타일."""
+    """[(위치, 문단 텍스트, 장·절 번호를 뺄지)] : 위치는 docx:p{문단 번호}. 번호는 outline_paragraphs 가 고름."""
     with zipfile.ZipFile(path) as z:
         root = ET.fromstring(z.read('word/document.xml'))
-    paras = []
+    raw = []
     for i, p in enumerate(root.iter(NS_W + 'p'), 1):
         s = ''.join((t.text or '') for t in p.iter(NS_W + 't'))
         if not s.strip():
             continue
         ps = p.find(NS_W + 'pPr/' + NS_W + 'pStyle')
         style = ps.get(NS_W + 'val', '') if ps is not None else ''
-        paras.append(('docx:p%d' % i, s, bool(HEADING_STYLE_RE.match(style))))
-    return paras
+        raw.append(('docx:p%d' % i, s, style))
+    keep = outline_paragraphs(raw)
+    return [(loc, s, idx in keep) for idx, (loc, s, _) in enumerate(raw)]
 
 
 def norm(s):

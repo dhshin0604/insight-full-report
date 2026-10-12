@@ -615,11 +615,29 @@ def gfr_negative(out_dir):
     except (OSError, ValueError):
         g_c = {}
     err_ok = rc_m == 2 and rc_c == 1 and g_c.get('gates', {}).get('claims') == 'fail'
-    ok = ok and err_ok
+    # 8장 이상 : INDEX 의 VIII 를 알아보는지, 목록 밖에 남은 슬라이드(VIII)를 잡는지 (N_CONTENT 불일치)
+    good = os.path.join(out_dir, 'gfr_pptx_kr', 'unpacked_kr')
+    viii_ok = False
+    if os.path.isdir(good):
+        t1 = os.path.join(d, 'toc_viii')
+        shutil.copytree(good, t1)
+        p2 = os.path.join(t1, 'ppt', 'slides', 'slide2.xml')
+        x = open(p2, encoding='utf-8').read()
+        open(p2, 'w', encoding='utf-8').write(re.sub(r'<a:t>VII\.', '<a:t>VIII.', x, count=1))
+        rc1, o1 = run([PY, os.path.join(GFR, 'verify_toc.py'), t1], cwd=d)
+        t2 = os.path.join(d, 'lost_viii')
+        shutil.copytree(good, t2)
+        sd = os.path.join(t2, 'ppt', 'slides')
+        x = open(os.path.join(sd, 'slide13.xml'), encoding='utf-8').read()
+        open(os.path.join(sd, 'slide14.xml'), 'w', encoding='utf-8').write(re.sub(r'<a:t>VII\.', '<a:t>VIII.', x, count=1))
+        rc2, o2 = run([PY, os.path.join(GFR, 'verify_toc.py'), t2], cwd=d)
+        viii_ok = rc1 == 1 and "'VIII'" in o1 and rc2 == 1 and 'slide14.xml' in o2
+    ok = ok and err_ok and viii_ok
     rec('gfr', 'gate-catches', 'PASS' if ok else 'FAIL',
-        '줄표와 과장어를 넣은 EN 슬라이드에서 %s 검출, 없는 DOCX 와 틀린 claims.json 도 실패 처리' % ', '.join(types)
-        if ok else 'rc=%d, 오류 종류 %s, 없는 DOCX rc=%d, 틀린 claims rc=%d %s\n%s'
-        % (rc, types, rc_m, rc_c, g_c.get('gates'), tail(o, 6)), time.time() - t0)
+        '줄표와 과장어를 넣은 EN 슬라이드에서 %s 검출, 없는 DOCX 와 틀린 claims.json 도 실패, '
+        'VIII 장 누락과 목록 밖 슬라이드도 검출' % ', '.join(types)
+        if ok else 'rc=%d, 오류 종류 %s, 없는 DOCX rc=%d, 틀린 claims rc=%d %s, VIII 검사 %s\n%s'
+        % (rc, types, rc_m, rc_c, g_c.get('gates'), viii_ok, tail(o, 6)), time.time() - t0)
 
 
 def gfr_cp949(out_dir):

@@ -632,12 +632,30 @@ def gfr_negative(out_dir):
         open(os.path.join(sd, 'slide14.xml'), 'w', encoding='utf-8').write(re.sub(r'<a:t>VII\.', '<a:t>VIII.', x, count=1))
         rc2, o2 = run([PY, os.path.join(GFR, 'verify_toc.py'), t2], cwd=d)
         viii_ok = rc1 == 1 and "'VIII'" in o1 and rc2 == 1 and 'slide14.xml' in o2
-    ok = ok and err_ok and viii_ok
+    # 원장 대조 규칙 : 날짜·헤딩 번호는 빼되 수량(2025.10 TWh, 연.월~연.월+단위)은 그대로 잡는지
+    t3 = os.path.join(d, 'claims_rules', 'ppt', 'slides')
+    os.makedirs(t3, exist_ok=True)
+    runs = ['1950.05~2010.12달러', '2025.10 TWh', '3.5 GW 시대', '2024.01~2025.12 기간', '2026.04.08', '2025.12 기준']
+    xml = ('<p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" '
+           'xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"><p:cSld><p:spTree>'
+           + ''.join('<a:p><a:r><a:t>%s</a:t></a:r></a:p>' % r for r in runs) + '</p:spTree></p:cSld></p:sld>')
+    open(os.path.join(t3, 'slide1.xml'), 'w', encoding='utf-8').write(xml)
+    with open(os.path.join(d, 'empty_ledger.json'), 'w', encoding='utf-8') as f:
+        json.dump({'topic': 'selftest', 'claims': []}, f)
+    run([PY, os.path.join(GFR, 'verify_claims.py'), '--claims', 'empty_ledger.json', '--unpacked',
+         os.path.join(d, 'claims_rules'), '--lang', 'kr', '--json', 'rules.json'], cwd=d)
+    try:
+        flagged = sorted({e['detail'].split(' …')[0] for e in json.load(open(os.path.join(d, 'rules.json'),
+                          encoding='utf-8')).get('errors', [])})
+    except (OSError, ValueError):
+        flagged = ['리포트 없음']
+    rules_ok = flagged == ['1950.05', '2010.12', '2025.10', '3.5']
+    ok = ok and err_ok and viii_ok and rules_ok
     rec('gfr', 'gate-catches', 'PASS' if ok else 'FAIL',
         '줄표와 과장어를 넣은 EN 슬라이드에서 %s 검출, 없는 DOCX 와 틀린 claims.json 도 실패, '
-        'VIII 장 누락과 목록 밖 슬라이드도 검출' % ', '.join(types)
-        if ok else 'rc=%d, 오류 종류 %s, 없는 DOCX rc=%d, 틀린 claims rc=%d %s, VIII 검사 %s\n%s'
-        % (rc, types, rc_m, rc_c, g_c.get('gates'), viii_ok, tail(o, 6)), time.time() - t0)
+        'VIII 장 누락과 목록 밖 슬라이드도 검출, 원장 대조는 날짜만 빼고 수량은 잡음' % ', '.join(types)
+        if ok else 'rc=%d, 오류 종류 %s, 없는 DOCX rc=%d, 틀린 claims rc=%d %s, VIII 검사 %s, 원장 규칙 %s\n%s'
+        % (rc, types, rc_m, rc_c, g_c.get('gates'), viii_ok, flagged, tail(o, 6)), time.time() - t0)
 
 
 def gfr_cp949(out_dir):

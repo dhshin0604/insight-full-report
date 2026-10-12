@@ -221,7 +221,7 @@ $ python3 scripts/selftest.py
   [PASS] gfr      pptx-en                13장, 게이트 toc=ok, content=ok, ..., 언어 순도 OK, 원장 대조 OK (본문 수치 23개 등록)
   [PASS] gfr      word-kr                게이트 toc=skip, content=ok, ..., 언어 순도 OK, 원장 대조 OK (본문 수치 23개 등록)
   [PASS] gfr      word-en                게이트 toc=skip, content=ok, ..., 언어 순도 OK, 원장 대조 OK (본문 수치 24개 등록)
-  [PASS] gfr      gate-catches           줄표와 과장어 EN 슬라이드에서 DASH, HYPE_HARD 검출, 없는 DOCX·틀린 claims.json·VIII 장 누락도 실패
+  [PASS] gfr      gate-catches           줄표와 과장어를 넣은 EN 슬라이드에서 DASH, HYPE_HARD 검출, 없는 DOCX 와 틀린 claims.json 도 실패, ...
   [PASS] gfr      cp949-pipe             cp949 파이프에서도 6개 스크립트가 멈추지 않고, 나쁜 PPTX 는 그대로 실패
   [PASS] harness  selfcheck              PASS
   [PASS] harness  assemble               content.json, claims.json (claim 35개)
@@ -232,7 +232,7 @@ $ python3 scripts/selftest.py
   [PASS] core     claims-lite            맞는 초안 통과, 틀린 초안에서 REMOVED_LEAK, NUM_UNREG 검출
   [PASS] plugin   validate               claude plugin validate --strict 통과
 
-결과 : PASS 22, FAIL 0, SKIP 0 (22초)
+결과 : PASS 22, FAIL 0, SKIP 0 (11초)
 ```
 
 - SKIP 은 그 기능에 필요한 프로그램이 없다는 뜻. FAIL 이 있으면 작업 폴더를 남기고 경로를 알려 줌

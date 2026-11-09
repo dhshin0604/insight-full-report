@@ -7,7 +7,7 @@
 한국어 Word · 영어 Word · 한국어 PowerPoint · 영어 PowerPoint
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-![version](https://img.shields.io/badge/version-0.9.3-blue.svg)
+![version](https://img.shields.io/badge/version-0.10.0-blue.svg)
 ![Claude](https://img.shields.io/badge/Claude-Compatible-purple.svg)
 ![Dynamic Workflow](https://img.shields.io/badge/Dynamic%20Workflow-Harness-red.svg)
 ![WRODING](https://img.shields.io/badge/WRODING-Series-orange.svg)
@@ -23,6 +23,22 @@
 **v0.9.1 "Unified Deep-Verify Edition"** builds the documents with a **dynamic multi-agent workflow harness** (Claude Code [dynamic workflows](https://code.claude.com/docs/en/workflows)) and blocks hallucinated facts with a **Claims-Ledger deep-verification gate** — every number in the output is traced to a source or explicitly marked as an estimate.
 
 v0.9.1은 **동적 워크플로 하니스**로 챕터를 병렬 생성·교차 검증하고, **Claims Ledger 기반 딥 베리피케이션**으로 출처 없는 수치가 최종 문서에 남지 못하게 차단합니다.
+
+---
+
+## What's new in v0.10.0 / 주요 변경점
+
+**New bundled skill: `evidence-led-slides`.** A slide skill for Korean analyst decks in the
+white-background, red-title house style (the CES / MWC / AI Act 2 deck family). Every slide pairs one
+conclusion headline on top with the table, diagram or numbers that prove it underneath. The skill
+forces a requirement-to-slide map before building, registers every number in the shared Claims Ledger
+with its slide number, and ends with `render_slides.py`, which renders the deck to per-slide PNGs plus a
+contact sheet so every slide is checked by eye. Personal reference-deck links are not stored in the
+repo; fill `references/style-sources.md` locally.
+
+흰 바탕·빨간 제목의 분석형 덱 전용 스킬 `evidence-led-slides`를 추가했습니다. 장마다 상단 결론 헤드라인과
+하단 근거를 1:1로 묶고, 제작 전 요구사항→장 매핑표, 장 번호가 붙은 Claims Ledger 원문 대조, 전 장 렌더
+검수(`render_slides.py`)를 강제합니다.
 
 ---
 
@@ -227,6 +243,9 @@ insight-full-report/
 │       ├── apply_profile.py / profile.json  # author & contact profile (see Setup)
 │       ├── build_pptx.sh / build_pptx_checked.sh
 │       └── build_*.template.{js,py} + TEMPLATE.pptx
+├── skills/evidence-led-slides/           # analyst slide decks, house style (v0.1)
+│   ├── SKILL.md                          # gates + 6-phase build/verify workflow
+│   └── references/                       # slide-style · style-sources (local) · render_slides.py
 ├── skills/quality-core/                  # standalone quality core (v0.1)
 │   ├── SKILL.md                          # gates + 6-phase verify workflow
 │   └── references/                       # claims-ledger · so-what · 16-pt rubric
@@ -251,6 +270,22 @@ insight-full-report/
 
 ---
 
+## Bundled skill: evidence-led-slides / 번들 스킬 — 분석형 슬라이드 (v0.1)
+
+`skills/evidence-led-slides/` builds and revises Korean analyst decks: one conclusion headline per
+slide, evidence underneath, sources checked against the original on seven points (actor, action,
+number, unit, time, scope, condition), and a full render check before delivery. Client templates
+always win over the house style. Trigger examples: **"분석형 슬라이드 만들어줘"**, **"MWC 스타일로 덱 만들어줘"**,
+**"이 덱 렌더 검수해줘"**.
+
+| | `generate-full-report` | `evidence-led-slides` | `quality-core` |
+|---|---|---|---|
+| Purpose / 목적 | 4-doc set / 4종 정본 | analyst deck / 분석형 덱 | verify any draft / 임의 문서 검증 |
+| Style / 스타일 | navy 5-Zone | white + red title / 흰 바탕·빨간 제목 | n/a |
+| Machine gate / 기계 게이트 | full OOXML gate chain | claims ledger + `render_slides.py` | `verify_claims_lite.py` |
+
+---
+
 ## Roadmap / 향후 계획
 
 - [ ] Additional slide templates and report layouts
@@ -263,6 +298,7 @@ insight-full-report/
 - [x] Author profile extraction — no personal data in templates (v0.9.2)
 - [x] Compatibility with the 2026-10 Anthropic pptx skill — built-in unpack/pack, rels-based sldIdLst, validate gate (v0.9.3)
 - [x] Standalone `quality-core` skill — extracted quality core (v0.1)
+- [x] `evidence-led-slides` skill: conclusion-on-top analyst decks with render check (v0.10.0)
 
 ---
 

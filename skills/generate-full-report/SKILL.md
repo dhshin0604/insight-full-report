@@ -29,6 +29,7 @@ description: |
 8. `present_files` 를 `$WORKSPACE` 바깥 경로(cwd, tmp, outputs 등)로 호출하려 했다 → STOP. mount 바깥 경로는 자동으로 세션 outputs 로 복사되어 카드 링크가 **세션 종료 후 깨짐**. 반드시 Phase 7-B 의 안전 검증 통과 후 $WORKSPACE 하위 경로만 전달.
 9. 소스 언어가 **한국어/영어가 아닌 경우**(중국어·일본어·기타) 원문 표기를 그대로 본문에 넣으려 했다 → STOP. **Phase 1.5 (다국어 소스 언어 정규화)** 를 먼저 수행한 뒤 Phase 2 로 진입.
 10. **소스에서 확인하지 않은 수치·날짜·사건·인용을 본문에 쓰려고 했다** → STOP. 모든 사실 주장은 Phase 2.7 의 Claims Ledger(`claims.json`)에 등록·검증되어야 한다 (`references/factcheck-pipeline.md`). 기억(사전지식)에서 꺼낸 수치는 웹으로 재확인 전까지 사용 금지.
+11. 4종 세트가 아니라 **분석형 덱 한 벌**(흰 바탕·빨간 제목 본인 스타일, CES·MWC·AI 2막 계열, 기존 덱 수정·렌더 검수 포함)만 요청했다 → STOP. `evidence-led-slides` 로 핸드오프.
 
 ---
 

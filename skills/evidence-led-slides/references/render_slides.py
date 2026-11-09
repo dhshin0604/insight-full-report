@@ -4,6 +4,8 @@
 사용법:
   python3 render_slides.py deck.pptx out_dir/ [--dpi 110] [--cols 4]
   python3 render_slides.py deck.pdf  out_dir/
+  python3 render_slides.py html_dir/ out_dir/   # slide-*.html 을 1280x720 PNG로 (Playwright)
+  python3 render_slides.py png_dir/  out_dir/   # 이미 있는 slide-*.png 로 contact sheet만
 
 필요 도구: LibreOffice(soffice, PPTX일 때), pdftoppm(poppler), Pillow(contact sheet).
 출력:
@@ -50,6 +52,29 @@ def to_png(pdf, out_dir, dpi):
     return sorted(renamed)
 
 
+def html_to_png(src_dir, out_dir, w=1280, h=720):
+    from playwright.sync_api import sync_playwright
+    htmls = sorted(glob.glob(os.path.join(src_dir, '*.html')))
+    out = []
+    with sync_playwright() as p:
+        b = p.chromium.launch()
+        pg = b.new_page(viewport={'width': w, 'height': h}, device_scale_factor=1)
+        for i, f in enumerate(htmls, 1):
+            pg.goto('file://' + os.path.abspath(f))
+            pg.wait_for_timeout(300)
+            over = pg.evaluate('''() => [...document.querySelectorAll('body *')].filter(e => {
+                const r = e.getBoundingClientRect();
+                return r.width > 0 && (r.right > innerWidth + 1 || r.bottom > innerHeight + 1);
+            }).length''')
+            dst = os.path.join(out_dir, 'slide-%02d.png' % i)
+            pg.screenshot(path=dst)
+            if over:
+                print('  경고: %s 에서 캔버스 밖으로 나간 요소 %d개' % (os.path.basename(f), over))
+            out.append(dst)
+        b.close()
+    return out
+
+
 def contact_sheet(files, out_dir, cols):
     try:
         from PIL import Image, ImageDraw
@@ -85,9 +110,15 @@ def main():
     ap.add_argument('--cols', type=int, default=4)
     a = ap.parse_args()
     os.makedirs(a.out_dir, exist_ok=True)
-    with tempfile.TemporaryDirectory() as tmp:
-        pdf = to_pdf(os.path.abspath(a.src), tmp)
-        files = to_png(pdf, a.out_dir, a.dpi)
+    if os.path.isdir(a.src) and glob.glob(os.path.join(a.src, '*.html')):
+        files = html_to_png(a.src, a.out_dir)
+    elif os.path.isdir(a.src):
+        files = sorted(glob.glob(os.path.join(a.src, '*.png')))
+        files = [f for f in files if not f.endswith('contact_sheet.png')]
+    else:
+        with tempfile.TemporaryDirectory() as tmp:
+            pdf = to_pdf(os.path.abspath(a.src), tmp)
+            files = to_png(pdf, a.out_dir, a.dpi)
     if not files:
         sys.exit('렌더링된 장이 없습니다.')
     sheet = contact_sheet(files, a.out_dir, a.cols)

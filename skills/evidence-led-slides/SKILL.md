@@ -27,7 +27,7 @@ description: |
 3. ../quality-core/references/style-rules.md    ← 사실↔해석 문형 분리
 ```
 
-본인 원본 덱 재현이 필요하면 `references/style-sources.md`의 링크(로컬에서 채움)를 열어 직접 렌더링해 확인한다.
+사용자 문체 프로파일(메모리의 writing-style 등)이 있으면 초안 전에 함께 읽는다. 본인 원본 덱 재현이 필요하면 `references/style-sources.md`의 링크(로컬에서 채움)를 열어 직접 렌더링해 확인한다.
 
 ## 적용 우선순위
 
@@ -39,7 +39,7 @@ description: |
 ## 워크플로 (6 Phase)
 
 ### Phase 1 — 과제 확인
-목적, 청중, 발표 시간·장수, 산출 형식, 템플릿, 사용할 원문, 제외 범위를 확인한다. 이미 주어진 정보는 다시 묻지 않는다. 비어 있는 핵심 정보만 한 번에 묻고(AskUserQuestion), 답이 없으면 가정을 작업 상단에 적고 진행한다.
+목적, 청중, 발표 시간·장수, 산출 형식, 템플릿, 사용할 원문, 제외 범위를 확인한다. 이미 주어진 정보는 다시 묻지 않는다. 비어 있는 핵심 정보만 한 번에 묻고(AskUserQuestion), 물을 수 없거나 답이 없으면 가정을 `mapping.md` 맨 위에 적고 진행한다.
 
 ### Phase 2 — 요구사항 → 장 매핑표
 제작 전에 아래 표를 만든다. 주제명만 적힌 목차는 매핑으로 치지 않는다.
@@ -55,6 +55,9 @@ description: |
 - 전망·목표를 실적이나 확정 사실로 바꾸지 않는다.
 - 복합 주장은 구성 요소별로 근거를 확인한다. 일부만 맞으면 전체를 verified로 두지 않는다.
 - 사실·해석·제안을 구별한다. 해석과 제안을 출처가 직접 말한 사실처럼 쓰지 않는다.
+- 1차 출처(기관·기업 원문)를 우선한다. 원문 페이지가 열리지 않으면 그 원문을 직접 인용한 신뢰할 만한 2차 보도(Reuters, 업계지 등)로 확인하고 verified로 두되, `note`에 확인 경로를 적는다.
+- 같은 기업 자료끼리 수치가 엇갈리면(고객 수 600k/620k/645k 등) 그 수치는 removed로 빼거나 가장 최근 1차 자료 하나로 시점을 밝혀 쓴다.
+- 정의·프레임워크는 작성자 해석이면 원장에 넣지 않고, 외부 기관 정의(ITU·Gartner 등)를 인용할 때만 `quote`로 등록한다.
 - 확인하지 못한 주장은 장에서 빼거나 결론 강도를 낮춘다. 「미확인」「확인 필요」 같은 표시를 산출물에 남기지 않는다. 꼭 필요한 자료를 열지 못했으면 사용자에게 그 자료를 요청한다.
 
 ### Phase 4 — 장 작성
@@ -68,9 +71,11 @@ description: |
 
 ```
 python3 references/render_slides.py deck.pptx out_dir/     # PPTX/PDF → 장별 PNG + contact_sheet.png
+python3 references/render_slides.py html_dir/ out_dir/     # slide-*.html → PNG(Playwright) + contact sheet
+python3 references/render_slides.py png_dir/ out_dir/      # 이미 만든 PNG → contact sheet만
 ```
 
-점검 항목: 잘림, 겹침, 가독성(최소 글자 크기), 정렬, 색 대비, 표·도식과 헤드라인의 연결, 출처 표시.
+점검 항목: 잘림, 겹침, 가독성(`slide-style.md` 1-1의 최소 글자 크기), 하단 빈 공간, 정렬, 색 대비, 표·도식과 헤드라인의 연결, 출처 표시.
 오류를 고치면 영향받은 장을 다시 렌더링하고, 공통 요소(마스터·제목 위치·색)에 손댔으면 전 장을 다시 본다.
 
 ### Phase 6 — 수정 후 전파 점검과 전달

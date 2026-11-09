@@ -96,4 +96,4 @@ EST_UNMARKED(추정 표기 누락 estimate), NO_URL(verified의 출처 부재 �
 ## 7. Source 표기 의무
 
 수치가 밀집한 절 끝 또는 문서 말미에 출처 섹션을 두고, claims.json의 source와
-정합시킨다. 슬라이드형 산출물이면 해당 슬라이드에 Source 줄을 단다.
+정합시킨다. 슬라이드형 산출물이면 해당 슬라이드에 Source 줄을 단다. 단, 새 수치 없이 앞 장 근거를 장 번호로 가리키는 시사점 장은 Source 줄을 생략할 수 있다.

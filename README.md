@@ -7,7 +7,7 @@
 한국어 Word · 영어 Word · 한국어 PowerPoint · 영어 PowerPoint
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-![version](https://img.shields.io/badge/version-0.10.0-blue.svg)
+![version](https://img.shields.io/badge/version-0.10.1-blue.svg)
 ![Claude](https://img.shields.io/badge/Claude-Compatible-purple.svg)
 ![Dynamic Workflow](https://img.shields.io/badge/Dynamic%20Workflow-Harness-red.svg)
 ![WRODING](https://img.shields.io/badge/WRODING-Series-orange.svg)
@@ -23,6 +23,17 @@
 **v0.9.1 "Unified Deep-Verify Edition"** builds the documents with a **dynamic multi-agent workflow harness** (Claude Code [dynamic workflows](https://code.claude.com/docs/en/workflows)) and blocks hallucinated facts with a **Claims-Ledger deep-verification gate** — every number in the output is traced to a source or explicitly marked as an estimate.
 
 v0.9.1은 **동적 워크플로 하니스**로 챕터를 병렬 생성·교차 검증하고, **Claims Ledger 기반 딥 베리피케이션**으로 출처 없는 수치가 최종 문서에 남지 못하게 차단합니다.
+
+---
+
+## What's new in v0.10.1 / 주요 변경점
+
+Fixes from a side-by-side test run of `evidence-led-slides`: a screen spec (canvas, fonts, minimum
+14px body text, no empty bottom space, at most two bullets per cell), rules for secondary-source
+confirmation and conflicting figures, `render_slides.py` now renders HTML slide folders and PNG folders
+and warns on canvas overflow, and `verify_claims_lite.py` no longer reads a "2. title" slide number as a figure.
+
+실사용 비교 테스트 결과를 반영해 화면 규격, 2차 출처·수치 불일치 처리 규칙, HTML·PNG 렌더 지원, 장 번호 오탐 수정을 넣었습니다.
 
 ---
 

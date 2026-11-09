@@ -37,6 +37,11 @@ def significant_numbers(text):
             val = float(bare)
         except ValueError:
             continue
+        # 「2. 제목」처럼 마침표+공백으로 끝나는 작은 정수는 목록·장 번호로 본다
+        # (뒤 단어가 「원격」「위해」처럼 단위 글자로 시작해도 수치로 오인하지 않게 함)
+        if tok != m.group() and m.group().endswith(".") and val < 100 \
+                and text[m.end(): m.end() + 1] in (" ", "\t") and float(val).is_integer():
+            continue
         # 아주 작은 정수(목록 번호·챕터 번호 등)는 문맥상 단위가 붙을 때만 유의미로 본다
         ctx = text[m.end(): m.end() + 6]
         has_unit = bool(re.match(r"\s*(%|억|조|만|천|배|년|개월|달러|원|위|건|명|p|pt|%p)", ctx))

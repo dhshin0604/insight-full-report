@@ -1,7 +1,7 @@
 {
   "name": "insight-full-report",
-  "version": "0.10.0",
-  "description": "신동형 인사이트 4종 문서 생성기 (Word KR+EN, PowerPoint KR+EN). v0.9.1 Unified Deep-Verify Edition: 동적 워크플로(ultracode) 하니스 내장, Deep Verification(Claims Ledger 기반 할루시네이션 차단), So-What 인사이트 프레임워크, 시각화 카탈로그, Word 챕터 자동 번호(H1C/H2C + HEADNUM 게이트), 4중 품질 게이트(toc/content/claims/judge). v0.9.2: 작성자·연락처를 references/profile.json 플레이스홀더로 분리(apply_profile.py) — 배포본에 개인 연락처가 남지 않습니다. v0.9.3: Anthropic pptx 스킬 2026-10 판 호환 — build_pptx.sh 가 unpack/pack 을 내장하고(구판 unpack.py/pack.py 도 지원), sldIdLst 를 rels 기준으로 정합하며, pack 뒤 validate.py 검증을 수행합니다. v0.10.0: 세 번째 번들 스킬 evidence-led-slides 추가 — 흰 바탕·빨간 제목의 분석형 덱을 상단 결론 헤드라인과 하단 근거로 묶고, 요구사항→장 매핑, Claims Ledger 원문 대조, render_slides.py 전 장 렌더 검수를 강제합니다.",
+  "version": "0.10.1",
+  "description": "신동형 인사이트 4종 문서 생성기 (Word KR+EN, PowerPoint KR+EN). v0.9.1 Unified Deep-Verify Edition: 동적 워크플로(ultracode) 하니스 내장, Deep Verification(Claims Ledger 기반 할루시네이션 차단), So-What 인사이트 프레임워크, 시각화 카탈로그, Word 챕터 자동 번호(H1C/H2C + HEADNUM 게이트), 4중 품질 게이트(toc/content/claims/judge). v0.9.2: 작성자·연락처를 references/profile.json 플레이스홀더로 분리(apply_profile.py) — 배포본에 개인 연락처가 남지 않습니다. v0.9.3: Anthropic pptx 스킬 2026-10 판 호환 — build_pptx.sh 가 unpack/pack 을 내장하고(구판 unpack.py/pack.py 도 지원), sldIdLst 를 rels 기준으로 정합하며, pack 뒤 validate.py 검증을 수행합니다. v0.10.0: 세 번째 번들 스킬 evidence-led-slides 추가 — 흰 바탕·빨간 제목의 분석형 덱을 상단 결론 헤드라인과 하단 근거로 묶고, 요구사항→장 매핑, Claims Ledger 원문 대조, render_slides.py 전 장 렌더 검수를 강제합니다. v0.10.1: 실사용 테스트 반영 — evidence-led-slides에 화면 규격(캔버스·글꼴·최소 글자·밀도)과 2차 출처·수치 불일치 처리 규칙 추가, render_slides.py가 HTML·PNG 폴더도 처리하고 캔버스 넘침을 경고, verify_claims_lite.py가 「2. 제목」 장 번호를 수치로 오인하던 문제 수정.",
   "author": {
     "name": "DH Shin (신동형)",
     "email": "donghyung.shin@gmail.com"
